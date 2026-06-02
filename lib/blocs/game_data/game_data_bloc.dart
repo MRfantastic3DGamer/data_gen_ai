@@ -2,11 +2,16 @@ import 'package:data_gen_ai/blocs/game_data/game_data_event.dart';
 import 'package:data_gen_ai/blocs/game_data/game_data_state.dart';
 import 'package:data_gen_ai/models/game_data_file_entry.dart';
 import 'package:data_gen_ai/repositories/project_repository.dart';
+import 'package:data_gen_ai/services/asset_index_service.dart';
 import 'package:data_gen_ai/services/registry_catalog_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class GameDataBloc extends Bloc<GameDataEvent, GameDataState> {
-  GameDataBloc(this._repository, this._registryCatalog) : super(const GameDataState()) {
+  GameDataBloc(
+    this._repository,
+    this._registryCatalog,
+    this._assetIndex,
+  ) : super(const GameDataState()) {
     on<GameDataStarted>(_onStarted);
     on<GameDataSearchChanged>(_onSearchChanged);
     on<GameDataCategoryFilterChanged>(_onCategoryChanged);
@@ -19,6 +24,7 @@ class GameDataBloc extends Bloc<GameDataEvent, GameDataState> {
 
   final ProjectRepository _repository;
   final RegistryCatalogService _registryCatalog;
+  final AssetIndexService _assetIndex;
 
   Future<void> _onStarted(
     GameDataEvent event,
@@ -28,6 +34,7 @@ class GameDataBloc extends Bloc<GameDataEvent, GameDataState> {
     try {
       await _registryCatalog.reload(_repository);
       final entries = await _repository.loadAllEntries();
+      await _assetIndex.rebuild(entries);
       emit(state.copyWith(loading: false, entries: entries));
     } catch (e) {
       emit(state.copyWith(loading: false, error: e.toString()));

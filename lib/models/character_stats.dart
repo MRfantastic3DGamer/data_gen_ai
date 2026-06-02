@@ -34,4 +34,22 @@ class CharacterStatsModel {
     'Wasts': wasts,
     'MaxSatiety': maxSatiety,
   };
+
+  CharacterStatsModel copyWith({
+    double? satiety,
+    double? hydration,
+    double? energy,
+    double? vitality,
+    double? wasts,
+    double? maxSatiety,
+  }) {
+    return CharacterStatsModel(
+      satiety: satiety ?? this.satiety,
+      hydration: hydration ?? this.hydration,
+      energy: energy ?? this.energy,
+      vitality: vitality ?? this.vitality,
+      wasts: wasts ?? this.wasts,
+      maxSatiety: maxSatiety ?? this.maxSatiety,
+    );
+  }
 }

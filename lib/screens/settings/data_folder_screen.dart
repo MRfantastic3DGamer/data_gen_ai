@@ -167,10 +167,10 @@ class _DataFolderScreenState extends State<DataFolderScreen> {
                   title: 'Workflow',
                   child: Text(
                     '1. Unity → Export GameData to JSON\n'
-                    '2. Copy RAW folder to your phone\n'
+                    '2. Copy the RAW folder (include .meta files next to assets for searchable picks)\n'
                     '3. Grant storage access, then choose folder\n'
-                    '4. Edit and Commit\n'
-                    '5. Copy back → Unity Import',
+                    '4. Edit using searchable name pickers (no manual GUIDs)\n'
+                    '5. Commit and copy back → Unity Import',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       height: 1.5,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,

@@ -1,5 +1,6 @@
-import 'package:data_gen_ai/models/registry_option.dart';
+import 'package:data_gen_ai/models/asset_picker_option.dart';
 import 'package:data_gen_ai/services/registry_catalog_service.dart';
+import 'package:data_gen_ai/widgets/forms/searchable_int_dropdown.dart';
 import 'package:flutter/material.dart';
 
 class FactionIdDropdown extends StatelessWidget {
@@ -20,8 +21,8 @@ class FactionIdDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final options = catalog.factionOptions(allowNone: allowNone);
-    if (options.isEmpty) {
+    final registryOptions = catalog.factionOptions(allowNone: allowNone);
+    if (registryOptions.isEmpty) {
       return ListTile(
         title: Text(label),
         subtitle: const Text(
@@ -30,28 +31,21 @@ class FactionIdDropdown extends StatelessWidget {
       );
     }
 
-    final selected = _matchOption(options, value);
-    return DropdownButtonFormField<int>(
-      value: selected?.value,
-      decoration: InputDecoration(labelText: label),
-      items: options
-          .map(
-            (RegistryOption<int> o) => DropdownMenuItem<int>(
-              value: o.value,
-              child: Text(o.label),
-            ),
-          )
-          .toList(),
-      onChanged: (v) {
-        if (v != null) onChanged(v);
-      },
-    );
-  }
+    final options = registryOptions
+        .map(
+          (o) => SearchableOption<int>(
+            value: o.value,
+            label: o.label,
+            searchTerms: '${o.value}',
+          ),
+        )
+        .toList();
 
-  RegistryOption<int>? _matchOption(List<RegistryOption<int>> options, int v) {
-    for (final o in options) {
-      if (o.value == v) return o;
-    }
-    return options.isNotEmpty ? options.first : null;
+    return SearchableIntDropdown(
+      label: label,
+      value: value,
+      options: options,
+      onChanged: onChanged,
+    );
   }
 }

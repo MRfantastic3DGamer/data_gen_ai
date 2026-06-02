@@ -4,6 +4,10 @@ import 'package:data_gen_ai/models/factions_config_model.dart';
 import 'package:data_gen_ai/repositories/project_repository.dart';
 import 'package:data_gen_ai/repositories/registry_repository.dart';
 import 'package:data_gen_ai/services/registry_catalog_service.dart';
+import 'package:data_gen_ai/widgets/forms/color_picker_field.dart';
+import 'package:data_gen_ai/widgets/forms/faction_relationship_editor.dart';
+import 'package:data_gen_ai/widgets/forms/list_editor.dart';
+import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -23,13 +27,18 @@ class FactionsTableScreen extends StatefulWidget {
 
 class _FactionsTableScreenState extends State<FactionsTableScreen> {
   late List<FactionDefinitionModel> _rows;
+  late List<FactionRelationshipModel> _relationships;
   var _saving = false;
 
   @override
   void initState() {
     super.initState();
+    final model = widget.catalog.factionsFile?.model;
     _rows = List<FactionDefinitionModel>.from(
-      widget.catalog.factionsFile?.model.factions ?? const <FactionDefinitionModel>[],
+      model?.factions ?? const <FactionDefinitionModel>[],
+    );
+    _relationships = List<FactionRelationshipModel>.from(
+      model?.relationships ?? const <FactionRelationshipModel>[],
     );
   }
 
@@ -39,7 +48,10 @@ class _FactionsTableScreenState extends State<FactionsTableScreen> {
 
     setState(() => _saving = true);
     try {
-      final model = file.model.copyWith(factions: _rows);
+      final model = file.model.copyWith(
+        factions: _rows,
+        relationships: _relationships,
+      );
       await widget.registryRepository.saveFactions(file: file, model: model);
       await widget.catalog.reload(context.read<ProjectRepository>());
       if (mounted) {
@@ -98,12 +110,16 @@ class _FactionsTableScreenState extends State<FactionsTableScreen> {
         },
         child: const Icon(Icons.add),
       ),
-      body: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
+      body: ListView(
+        padding: const EdgeInsets.all(12),
+        children: <Widget>[
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
           columns: const <DataColumn>[
             DataColumn(label: Text('Id')),
             DataColumn(label: Text('Name')),
+            DataColumn(label: Text('Color')),
             DataColumn(label: Text('')),
           ],
           rows: _rows.asMap().entries.map((entry) {
@@ -148,6 +164,24 @@ class _FactionsTableScreenState extends State<FactionsTableScreen> {
                   ),
                 ),
                 DataCell(
+                  SizedBox(
+                    width: 120,
+                    child: ColorPickerField(
+                      label: '',
+                      value: row.editorColor,
+                      onChanged: (c) {
+                        setState(() {
+                          _rows[index] = FactionDefinitionModel(
+                            id: row.id,
+                            name: row.name,
+                            editorColor: c,
+                          );
+                        });
+                      },
+                    ),
+                  ),
+                ),
+                DataCell(
                   IconButton(
                     icon: const Icon(Icons.delete_outline),
                     onPressed: () => setState(() => _rows.removeAt(index)),
@@ -156,7 +190,34 @@ class _FactionsTableScreenState extends State<FactionsTableScreen> {
               ],
             );
           }).toList(),
-        ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          SectionCard(
+            title: 'Faction relationships',
+            child: ListEditor(
+              title: 'Relationships',
+              itemCount: _relationships.length,
+              onAdd: () => setState(
+                () => _relationships.add(
+                  const FactionRelationshipModel(a: 1, b: 2, type: 1),
+                ),
+              ),
+              itemBuilder: (context, index) {
+                return FactionRelationshipEditor(
+                  relationship: _relationships[index],
+                  catalog: widget.catalog,
+                  onChanged: (r) {
+                    setState(() {
+                      _relationships[index] = r;
+                    });
+                  },
+                  onDelete: () => setState(() => _relationships.removeAt(index)),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

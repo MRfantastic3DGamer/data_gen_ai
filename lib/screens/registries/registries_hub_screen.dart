@@ -13,6 +13,7 @@ class RegistriesHubScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final factionCount = catalog.factionsFile?.model.factions.length ?? 0;
     final animConfigCount = catalog.animationTypesFiles.length;
+    final workTypeCount = catalog.workTypesFile?.model.types.length ?? 0;
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -46,6 +47,16 @@ class RegistriesHubScreen extends StatelessWidget {
             iconColor: colorScheme.secondary,
             delayMs: 40,
             onTap: () => context.push('/registries/animation-types'),
+          ),
+          NavCard(
+            title: 'Work types',
+            subtitle: workTypeCount == 0
+                ? 'WorkTypesConfig.json not loaded'
+                : '$workTypeCount work type(s) · workpost filters',
+            icon: Icons.work_outline_rounded,
+            iconColor: colorScheme.tertiary,
+            delayMs: 80,
+            onTap: () => context.push('/registries/work-types'),
           ),
         ],
       ),

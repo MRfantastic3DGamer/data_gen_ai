@@ -1,5 +1,6 @@
 import 'package:data_gen_ai/models/animation_types_config_model.dart';
 import 'package:data_gen_ai/models/factions_config_model.dart';
+import 'package:data_gen_ai/models/work_types_config_model.dart';
 import 'package:data_gen_ai/models/game_data_file_entry.dart';
 import 'package:data_gen_ai/models/registry_option.dart';
 import 'package:data_gen_ai/models/unity_envelope.dart';
@@ -9,6 +10,7 @@ import 'package:data_gen_ai/repositories/project_repository.dart';
 /// Indexes FactionsConfig and AnimationTypesConfig exports (Unity registry tables).
 class RegistryCatalogService {
   FactionsConfigFile? factionsFile;
+  WorkTypesConfigFile? workTypesFile;
   final List<AnimationTypesConfigFile> animationTypesFiles =
       <AnimationTypesConfigFile>[];
 
@@ -22,6 +24,7 @@ class RegistryCatalogService {
 
   Future<void> reload(ProjectRepository repository) async {
     factionsFile = null;
+    workTypesFile = null;
     animationTypesFiles.clear();
     factionToTypesFile.clear();
     typesByGuid.clear();
@@ -36,6 +39,12 @@ class RegistryCatalogService {
           path: entry.path,
           envelope: entry.envelope,
           model: FactionsConfigModel.fromJson(entry.payload),
+        );
+      } else if (id.contains('WorkTypesConfig')) {
+        workTypesFile = WorkTypesConfigFile(
+          path: entry.path,
+          envelope: entry.envelope,
+          model: WorkTypesConfigModel.fromJson(entry.payload),
         );
       } else if (id.contains('AnimationTypesConfig')) {
         animationTypesFiles.add(
@@ -198,4 +207,16 @@ class FactionsConfigFile {
   final String path;
   final UnityEnvelope envelope;
   final FactionsConfigModel model;
+}
+
+class WorkTypesConfigFile {
+  const WorkTypesConfigFile({
+    required this.path,
+    required this.envelope,
+    required this.model,
+  });
+
+  final String path;
+  final UnityEnvelope envelope;
+  final WorkTypesConfigModel model;
 }

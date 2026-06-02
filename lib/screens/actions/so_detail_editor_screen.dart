@@ -4,8 +4,20 @@ import 'package:data_gen_ai/blocs/game_data/game_data_state.dart';
 import 'package:data_gen_ai/models/game_data_file_entry.dart';
 import 'package:data_gen_ai/repositories/project_repository.dart';
 import 'package:data_gen_ai/widgets/common/json_preview_panel.dart';
+import 'package:data_gen_ai/widgets/editors/action_catalog_entry_editor_form.dart';
+import 'package:data_gen_ai/widgets/editors/action_catalog_registry_editor_form.dart';
 import 'package:data_gen_ai/widgets/editors/actionable_editor_form.dart';
+import 'package:data_gen_ai/widgets/editors/animation_registry_editor_form.dart';
 import 'package:data_gen_ai/widgets/editors/belief_editor_form.dart';
+import 'package:data_gen_ai/widgets/editors/belief_selection_editor_form.dart';
+import 'package:data_gen_ai/widgets/editors/character_animation_database_editor_form.dart';
+import 'package:data_gen_ai/widgets/editors/character_stats_so_editor_form.dart';
+import 'package:data_gen_ai/widgets/editors/combo_data_so_editor_form.dart';
+import 'package:data_gen_ai/widgets/editors/considerable_editor_form.dart';
+import 'package:data_gen_ai/widgets/editors/consideration_function_editor_form.dart';
+import 'package:data_gen_ai/widgets/editors/move_library_so_editor_form.dart';
+import 'package:data_gen_ai/widgets/editors/query_view_editor.dart';
+import 'package:data_gen_ai/widgets/editors/so_editor_utils.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -93,6 +105,8 @@ class _SODetailEditorScreenState extends State<SODetailEditorScreen> {
 
     final entry = _entry!;
     final typeKey = entry.typeInfo?.key;
+    final classId = entry.envelope.editorClassIdentifier;
+    final isQueryView = queryViewTypeFromIdentifier(classId) != null;
 
     return Scaffold(
       appBar: AppBar(
@@ -114,17 +128,70 @@ class _SODetailEditorScreenState extends State<SODetailEditorScreen> {
             ),
         ],
       ),
-      body: _buildEditor(typeKey, entry),
+      body: _buildEditor(typeKey, classId, isQueryView, entry),
     );
   }
 
-  Widget _buildEditor(String? typeKey, GameDataFileEntry entry) {
+  Widget _buildEditor(
+    String? typeKey,
+    String classId,
+    bool isQueryView,
+    GameDataFileEntry entry,
+  ) {
+    if (isQueryView) {
+      return QueryViewEditorForm(entry: entry, onChanged: _onChanged);
+    }
+
     switch (typeKey) {
       case 'ActionableSO':
         return ActionableEditorForm(entry: entry, onChanged: _onChanged);
       case 'BeliefSO':
         return BeliefEditorForm(entry: entry, onChanged: _onChanged);
+      case 'BeliefSelectionSO':
+        return BeliefSelectionEditorForm(entry: entry, onChanged: _onChanged);
+      case 'ConsiderableSO':
+        return ConsiderableEditorForm(entry: entry, onChanged: _onChanged);
+      case 'ConsiderationFunctionSO':
+        return ConsiderationFunctionEditorForm(
+          entry: entry,
+          onChanged: _onChanged,
+        );
+      case 'ActionCatalogEntrySO':
+        return ActionCatalogEntryEditorForm(entry: entry, onChanged: _onChanged);
+      case 'ActionCatalogRegistry':
+        return ActionCatalogRegistryEditorForm(
+          entry: entry,
+          onChanged: _onChanged,
+        );
+      case 'CharacterAnimationDatabase':
+        return CharacterAnimationDatabaseEditorForm(
+          entry: entry,
+          onChanged: _onChanged,
+        );
+      case 'CharacterStatsSO':
+        return CharacterStatsSOEditorForm(entry: entry, onChanged: _onChanged);
+      case 'ComboDataSO':
+        return ComboDataSOEditorForm(entry: entry, onChanged: _onChanged);
+      case 'MoveLibrarySO':
+        return MoveLibrarySOEditorForm(entry: entry, onChanged: _onChanged);
+      case 'AnimationRegistry':
+        return AnimationRegistryEditorForm(entry: entry, onChanged: _onChanged);
       default:
+        if (classId.contains('CharacterStatsSO')) {
+          return CharacterStatsSOEditorForm(entry: entry, onChanged: _onChanged);
+        }
+        if (classId.contains('ComboDataSO')) {
+          return ComboDataSOEditorForm(entry: entry, onChanged: _onChanged);
+        }
+        if (classId.contains('MoveLibrarySO')) {
+          return MoveLibrarySOEditorForm(entry: entry, onChanged: _onChanged);
+        }
+        if (classId.contains('AnimationRegistry')) {
+          return AnimationRegistryEditorForm(
+            entry: entry,
+            onChanged: _onChanged,
+          );
+        }
         return ListView(
           padding: const EdgeInsets.all(12),
           children: <Widget>[
