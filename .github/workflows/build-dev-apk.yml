@@ -1,0 +1,60 @@
+# Builds a development (debug) Android APK and uploads it as a workflow artifact.
+# Download from: Actions → latest run → Artifacts → data-gen-ai-dev-apk
+name: Build Dev APK
+
+on:
+  push:
+    branches:
+      - main
+      - 'cursor/**'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: dev-apk-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-dev-apk:
+    name: Flutter dev APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build debug APK
+        run: flutter build apk --debug
+
+      - name: Prepare artifact
+        run: |
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-debug.apk \
+            "dist/data-gen-ai-dev-${GITHUB_SHA::7}.apk"
+
+      - name: Upload dev APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: data-gen-ai-dev-apk
+          path: dist/*.apk
+          if-no-files-found: error
+          retention-days: 30
