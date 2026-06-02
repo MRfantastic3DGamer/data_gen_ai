@@ -112,25 +112,36 @@ class CharacterDataModel {
 
   CharacterDataModel copyWith({
     String? description,
+    CharacterStatsModel? initialStats,
     int? faction,
     int? characterType,
     bool? bakeModularStates,
+    CharacterStateDesignModel? stateDesign,
+    List<UnityReference>? beliefsObjects,
+    List<UnityReference>? actionables,
+    int? defaultAction,
+    NavigateConfigModel? defaultNavigateConfig,
+    WaitConfigModel? defaultWaitConfig,
+    EatConfigModel? defaultEatConfig,
+    List<ActuatorMappingModel>? actuatorMappings,
+    List<ItemInteractionSlotDefinition>? interactionSlots,
   }) {
     return CharacterDataModel(
       description: description ?? this.description,
-      initialStats: initialStats,
+      initialStats: initialStats ?? this.initialStats,
       faction: faction ?? this.faction,
       characterType: characterType ?? this.characterType,
       bakeModularStates: bakeModularStates ?? this.bakeModularStates,
-      stateDesign: stateDesign,
-      beliefsObjects: beliefsObjects,
-      actionables: actionables,
-      defaultAction: defaultAction,
-      defaultNavigateConfig: defaultNavigateConfig,
-      defaultWaitConfig: defaultWaitConfig,
-      defaultEatConfig: defaultEatConfig,
-      actuatorMappings: actuatorMappings,
-      interactionSlots: interactionSlots,
+      stateDesign: stateDesign ?? this.stateDesign,
+      beliefsObjects: beliefsObjects ?? this.beliefsObjects,
+      actionables: actionables ?? this.actionables,
+      defaultAction: defaultAction ?? this.defaultAction,
+      defaultNavigateConfig:
+          defaultNavigateConfig ?? this.defaultNavigateConfig,
+      defaultWaitConfig: defaultWaitConfig ?? this.defaultWaitConfig,
+      defaultEatConfig: defaultEatConfig ?? this.defaultEatConfig,
+      actuatorMappings: actuatorMappings ?? this.actuatorMappings,
+      interactionSlots: interactionSlots ?? this.interactionSlots,
     );
   }
 }

@@ -9,7 +9,7 @@ import 'package:data_gen_ai/blocs/item/item_state.dart';
 import 'package:data_gen_ai/models/item_data.dart';
 import 'package:data_gen_ai/widgets/common/ai_prompt_sheet.dart';
 import 'package:data_gen_ai/widgets/common/json_preview_panel.dart';
-import 'package:data_gen_ai/widgets/forms/enum_dropdown.dart';
+import 'package:data_gen_ai/widgets/editors/item_data_editor_form.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -177,47 +177,12 @@ class _ItemEditorScreenState extends State<ItemEditorScreen> {
                       );
                     },
                   ),
-                  SectionCard(
-                    title: 'Identity',
-                    child: Column(
-                      children: <Widget>[
-                        TextField(
-                          controller: _idController,
-                          decoration: const InputDecoration(
-                            labelText: 'Item ID',
-                          ),
-                          onChanged: (value) => context.read<ItemBloc>().add(
-                            ItemUpdated(data.copyWith(itemId: value)),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: _descriptionController,
-                          maxLines: 2,
-                          decoration: const InputDecoration(
-                            labelText: 'Description',
-                          ),
-                          onChanged: (value) => context.read<ItemBloc>().add(
-                            ItemUpdated(data.copyWith(description: value)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SectionCard(
-                    title: 'Type',
-                    child: EnumDropdown(
-                      label: 'Category',
-                      value: data.category,
-                      options: const <int, String>{
-                        1: 'Consumable',
-                        2: 'Weapon',
-                        4: 'Shield',
-                      },
-                      onChanged: (value) => context.read<ItemBloc>().add(
-                        ItemUpdated(data.copyWith(category: value)),
-                      ),
-                    ),
+                  ItemDataEditorForm(
+                    data: data,
+                    idController: _idController,
+                    descriptionController: _descriptionController,
+                    onChanged: (next) =>
+                        context.read<ItemBloc>().add(ItemUpdated(next)),
                   ),
                   SectionCard(
                     title: 'JSON Preview',

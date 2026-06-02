@@ -8,6 +8,7 @@ import 'package:data_gen_ai/widgets/forms/float_field.dart';
 import 'package:data_gen_ai/widgets/forms/int_field.dart';
 import 'package:data_gen_ai/widgets/forms/reference_field.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
+import 'package:data_gen_ai/widgets/forms/vector2_field.dart';
 import 'package:data_gen_ai/widgets/forms/vector3_field.dart';
 import 'package:flutter/material.dart';
 
@@ -134,11 +135,18 @@ class _BeliefEditorFormState extends State<BeliefEditorForm> {
                 initialValue: _model.floatValue,
                 onChanged: (v) => _update(_copy(floatValue: v)),
               ),
-              Vector3Field(
-                label: 'Vector value',
-                value: _model.vectorValue,
-                onChanged: (v) => _update(_copy(vectorValue: v)),
-              ),
+              if (_model.isVectorValue)
+                Vector3Field(
+                  label: 'Vector value',
+                  value: _model.vectorValue,
+                  onChanged: (v) => _update(_copy(vectorValue: v)),
+                ),
+              if (_model.isRangeValue)
+                Vector2Field(
+                  label: 'Range value',
+                  value: _model.rangeValue,
+                  onChanged: (v) => _update(_copy(rangeValue: v)),
+                ),
             ],
           ),
         ),
@@ -171,6 +179,7 @@ class _BeliefEditorFormState extends State<BeliefEditorForm> {
     bool? boolValue,
     double? floatValue,
     Map<String, dynamic>? vectorValue,
+    Map<String, dynamic>? rangeValue,
     bool? useHysteresis,
     double? hysteresisDelta,
   }) {
@@ -184,7 +193,7 @@ class _BeliefEditorFormState extends State<BeliefEditorForm> {
       boolValue: boolValue ?? _model.boolValue,
       floatValue: floatValue ?? _model.floatValue,
       vectorValue: vectorValue ?? _model.vectorValue,
-      rangeValue: _model.rangeValue,
+      rangeValue: rangeValue ?? _model.rangeValue,
       useHysteresis: useHysteresis ?? _model.useHysteresis,
       hysteresisDelta: hysteresisDelta ?? _model.hysteresisDelta,
     );

@@ -12,6 +12,7 @@ import 'package:data_gen_ai/screens/registries/animation_types_list_screen.dart'
 import 'package:data_gen_ai/screens/registries/animation_types_table_screen.dart';
 import 'package:data_gen_ai/screens/registries/factions_table_screen.dart';
 import 'package:data_gen_ai/screens/registries/registries_hub_screen.dart';
+import 'package:data_gen_ai/screens/registries/work_types_table_screen.dart';
 import 'package:data_gen_ai/screens/settings/data_folder_screen.dart';
 import 'package:data_gen_ai/services/registry_catalog_service.dart';
 import 'package:flutter/material.dart';
@@ -59,6 +60,13 @@ class AppRouter {
       GoRoute(
         path: '/registries/animation-types/edit',
         builder: (context, state) => AnimationTypesTableScreen(
+          catalog: context.read<RegistryCatalogService>(),
+          registryRepository: context.read<RegistryRepository>(),
+        ),
+      ),
+      GoRoute(
+        path: '/registries/work-types',
+        builder: (context, state) => WorkTypesTableScreen(
           catalog: context.read<RegistryCatalogService>(),
           registryRepository: context.read<RegistryRepository>(),
         ),

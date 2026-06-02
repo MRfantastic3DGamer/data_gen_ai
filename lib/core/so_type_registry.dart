@@ -125,6 +125,46 @@ class SOTypeRegistry {
       category: 'Catalog',
       iconName: 'storage',
     ),
+    SOTypeInfo(
+      key: 'CharacterStatsSO',
+      displayName: 'Character Stats',
+      classIdentifier: 'Assembly-CSharp::AI.DataModels.CharacterStatsSO',
+      subfolder: 'Characters',
+      category: 'Characters',
+      iconName: 'monitor_heart',
+    ),
+    SOTypeInfo(
+      key: 'ComboDataSO',
+      displayName: 'Combo Data',
+      classIdentifier: 'Assembly-CSharp::CommandSystem.ComboDataSO',
+      subfolder: 'combos',
+      category: 'Combat',
+      iconName: 'sports_martial_arts',
+    ),
+    SOTypeInfo(
+      key: 'MoveLibrarySO',
+      displayName: 'Move Library',
+      classIdentifier: 'Assembly-CSharp::Moves.Core.MoveLibrarySO',
+      subfolder: 'Moves',
+      category: 'Combat',
+      iconName: 'sports_kabaddi',
+    ),
+    SOTypeInfo(
+      key: 'AnimationRegistry',
+      displayName: 'Animation Registry',
+      classIdentifier: 'Assembly-CSharp::AnimationRegistry',
+      subfolder: 'Characters',
+      category: 'Registries',
+      iconName: 'video_settings',
+    ),
+    SOTypeInfo(
+      key: 'WorkTypesConfig',
+      displayName: 'Work Types',
+      classIdentifier: 'Assembly-CSharp::GameData.Workpost.WorkTypesConfig',
+      subfolder: 'Characters',
+      category: 'Registries',
+      iconName: 'work',
+    ),
   ];
 
   static SOTypeInfo? fromClassIdentifier(String? identifier) {

@@ -8,10 +8,7 @@ import 'package:data_gen_ai/blocs/character/character_event.dart';
 import 'package:data_gen_ai/blocs/character/character_state.dart';
 import 'package:data_gen_ai/widgets/common/ai_prompt_sheet.dart';
 import 'package:data_gen_ai/widgets/common/json_preview_panel.dart';
-import 'package:data_gen_ai/widgets/forms/bool_toggle.dart';
-import 'package:data_gen_ai/services/registry_catalog_service.dart';
-import 'package:data_gen_ai/widgets/forms/faction_id_dropdown.dart';
-import 'package:data_gen_ai/widgets/forms/int_field.dart';
+import 'package:data_gen_ai/widgets/editors/character_data_editor_form.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:data_gen_ai/widgets/visualization/belief_chain_diagram.dart';
 import 'package:flutter/material.dart';
@@ -83,60 +80,15 @@ class _CharacterEditorScreenState extends State<CharacterEditorScreen> {
           },
           builder: (context, state) {
             final data = state.data;
-            final catalog = context.read<RegistryCatalogService>();
             return SingleChildScrollView(
               padding: const EdgeInsets.all(12),
               child: Column(
                 children: <Widget>[
-                  SectionCard(
-                    title: 'Identity',
-                    child: TextField(
-                      controller: _descriptionController,
-                      maxLines: 2,
-                      decoration: const InputDecoration(
-                        labelText: 'Description',
-                      ),
-                      onChanged: (value) {
-                        context.read<CharacterBloc>().add(
-                          CharacterUpdated(data.copyWith(description: value)),
-                        );
-                      },
-                    ),
-                  ),
-                  SectionCard(
-                    title: 'Core',
-                    child: Column(
-                      children: <Widget>[
-                        FactionIdDropdown(
-                          catalog: catalog,
-                          label: 'Faction (FactionsConfig)',
-                          value: data.faction,
-                          onChanged: (value) =>
-                              context.read<CharacterBloc>().add(
-                                CharacterUpdated(data.copyWith(faction: value)),
-                              ),
-                        ),
-                        IntField(
-                          label: 'Character Type',
-                          initialValue: data.characterType,
-                          onChanged: (value) =>
-                              context.read<CharacterBloc>().add(
-                                CharacterUpdated(
-                                  data.copyWith(characterType: value),
-                                ),
-                              ),
-                        ),
-                        BoolToggle(
-                          label: 'Bake Modular States',
-                          value: data.bakeModularStates,
-                          onChanged: (value) =>
-                              context.read<CharacterBloc>().add(
-                                CharacterUpdated(
-                                  data.copyWith(bakeModularStates: value),
-                                ),
-                              ),
-                        ),
-                      ],
+                  CharacterDataEditorForm(
+                    data: data,
+                    descriptionController: _descriptionController,
+                    onChanged: (next) => context.read<CharacterBloc>().add(
+                      CharacterUpdated(next),
                     ),
                   ),
                   BeliefChainDiagram(

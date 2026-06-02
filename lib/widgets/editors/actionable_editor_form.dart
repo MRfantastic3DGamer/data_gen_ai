@@ -2,8 +2,8 @@ import 'package:data_gen_ai/core/enums/result_field.dart';
 import 'package:data_gen_ai/models/actionable_so.dart';
 import 'package:data_gen_ai/models/game_data_file_entry.dart';
 import 'package:data_gen_ai/models/unity_reference.dart';
+import 'package:data_gen_ai/widgets/forms/action_id_dropdown.dart';
 import 'package:data_gen_ai/widgets/forms/float_field.dart';
-import 'package:data_gen_ai/widgets/forms/int_field.dart';
 import 'package:data_gen_ai/widgets/forms/reference_field.dart';
 import 'package:data_gen_ai/widgets/forms/reference_list_editor.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
@@ -52,9 +52,9 @@ class _ActionableEditorFormState extends State<ActionableEditorForm> {
       children: <Widget>[
         SectionCard(
           title: 'Action',
-          child: IntField(
-            label: 'Catalog action id',
-            initialValue: _model.action,
+          child:           ActionIdDropdown(
+            label: 'Catalog action',
+            value: _model.action,
             onChanged: (v) => _update(_copy(action: v)),
           ),
         ),
