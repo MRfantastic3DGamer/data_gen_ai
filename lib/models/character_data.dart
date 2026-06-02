@@ -17,7 +17,7 @@ class CharacterDataModel {
     this.stateDesign = const CharacterStateDesignModel(),
     this.beliefsObjects = const <UnityReference>[],
     this.actionables = const <UnityReference>[],
-    this.defaultActionSo = const UnityReference(guid: '', fileId: 0),
+    this.defaultAction = -1,
     this.defaultNavigateConfig = const NavigateConfigModel(),
     this.defaultWaitConfig = const WaitConfigModel(),
     this.defaultEatConfig = const EatConfigModel(),
@@ -33,7 +33,7 @@ class CharacterDataModel {
   final CharacterStateDesignModel stateDesign;
   final List<UnityReference> beliefsObjects;
   final List<UnityReference> actionables;
-  final UnityReference defaultActionSo;
+  final int defaultAction;
   final NavigateConfigModel defaultNavigateConfig;
   final WaitConfigModel defaultWaitConfig;
   final EatConfigModel defaultEatConfig;
@@ -64,9 +64,7 @@ class CharacterDataModel {
             (dynamic e) => UnityReference.fromJson(e as Map<String, dynamic>?),
           )
           .toList(),
-      defaultActionSo: UnityReference.fromJson(
-        json['defaultActionSo'] as Map<String, dynamic>?,
-      ),
+      defaultAction: (json['defaultAction'] ?? -1) as int,
       defaultNavigateConfig: NavigateConfigModel.fromJson(
         json['DefaultNavigateConfig'] as Map<String, dynamic>?,
       ),
@@ -104,7 +102,7 @@ class CharacterDataModel {
     'StateDesign': stateDesign.toJson(),
     'beliefsObjects': beliefsObjects.map((e) => e.toJson()).toList(),
     'actionables': actionables.map((e) => e.toJson()).toList(),
-    'defaultActionSo': defaultActionSo.toJson(),
+    'defaultAction': defaultAction,
     'DefaultNavigateConfig': defaultNavigateConfig.toJson(),
     'DefaultWaitConfig': defaultWaitConfig.toJson(),
     'DefaultEatConfig': defaultEatConfig.toJson(),
@@ -127,7 +125,7 @@ class CharacterDataModel {
       stateDesign: stateDesign,
       beliefsObjects: beliefsObjects,
       actionables: actionables,
-      defaultActionSo: defaultActionSo,
+      defaultAction: defaultAction,
       defaultNavigateConfig: defaultNavigateConfig,
       defaultWaitConfig: defaultWaitConfig,
       defaultEatConfig: defaultEatConfig,

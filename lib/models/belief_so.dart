@@ -35,10 +35,10 @@ class BeliefSOModel {
     ),
     field: (json['field'] ?? 0) as int,
     condition: (json['condition'] ?? 0) as int,
-    isVectorValue: (json['isVectorValue'] ?? false) as bool,
-    isRangeValue: (json['isRangeValue'] ?? false) as bool,
+    isVectorValue: _readBool(json['isVectorValue']),
+    isRangeValue: _readBool(json['isRangeValue']),
     intValue: (json['intValue'] ?? 0) as int,
-    boolValue: (json['boolValue'] ?? false) as bool,
+    boolValue: _readBool(json['boolValue']),
     floatValue: (json['floatValue'] ?? 0).toDouble(),
     vectorValue: Map<String, dynamic>.from(
       json['vectorValue'] as Map? ?? <String, dynamic>{'x': 0, 'y': 0, 'z': 0},
@@ -46,9 +46,15 @@ class BeliefSOModel {
     rangeValue: Map<String, dynamic>.from(
       json['rangeValue'] as Map? ?? <String, dynamic>{'x': 0, 'y': 0},
     ),
-    useHysteresis: (json['useHysteresis'] ?? false) as bool,
+    useHysteresis: _readBool(json['useHysteresis']),
     hysteresisDelta: (json['hysteresisDelta'] ?? 0).toDouble(),
   );
+
+  static bool _readBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is int) return value != 0;
+    return false;
+  }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
     'queryViewAsset': queryViewAsset.toJson(),

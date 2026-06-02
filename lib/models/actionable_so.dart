@@ -3,7 +3,7 @@ import 'package:data_gen_ai/models/unity_reference.dart';
 class ActionableSOModel {
   const ActionableSOModel({
     this.providedBeliefAssets = const <UnityReference>[],
-    this.actionDataAsset = const UnityReference(guid: '', fileId: 0),
+    this.action = 0,
     this.requiredBeliefAssets = const <UnityReference>[],
     this.constCost = 0,
     this.costQuery = const UnityReference(guid: '', fileId: 0),
@@ -16,7 +16,7 @@ class ActionableSOModel {
   });
 
   final List<UnityReference> providedBeliefAssets;
-  final UnityReference actionDataAsset;
+  final int action;
   final List<UnityReference> requiredBeliefAssets;
   final double constCost;
   final UnityReference costQuery;
@@ -37,9 +37,7 @@ class ActionableSOModel {
                   UnityReference.fromJson(e as Map<String, dynamic>?),
             )
             .toList(),
-    actionDataAsset: UnityReference.fromJson(
-      json['actionDataAsset'] as Map<String, dynamic>?,
-    ),
+    action: (json['action'] ?? 0) as int,
     requiredBeliefAssets:
         (json['requiredBeliefAssets'] as List<dynamic>? ?? const <dynamic>[])
             .map(
@@ -65,7 +63,7 @@ class ActionableSOModel {
     'providedBeliefAssets': providedBeliefAssets
         .map((e) => e.toJson())
         .toList(),
-    'actionDataAsset': actionDataAsset.toJson(),
+    'action': action,
     'requiredBeliefAssets': requiredBeliefAssets
         .map((e) => e.toJson())
         .toList(),

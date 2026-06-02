@@ -9,6 +9,8 @@ import 'package:data_gen_ai/blocs/character/character_state.dart';
 import 'package:data_gen_ai/widgets/common/ai_prompt_sheet.dart';
 import 'package:data_gen_ai/widgets/common/json_preview_panel.dart';
 import 'package:data_gen_ai/widgets/forms/bool_toggle.dart';
+import 'package:data_gen_ai/services/registry_catalog_service.dart';
+import 'package:data_gen_ai/widgets/forms/faction_id_dropdown.dart';
 import 'package:data_gen_ai/widgets/forms/int_field.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:data_gen_ai/widgets/visualization/belief_chain_diagram.dart';
@@ -81,6 +83,7 @@ class _CharacterEditorScreenState extends State<CharacterEditorScreen> {
           },
           builder: (context, state) {
             final data = state.data;
+            final catalog = context.read<RegistryCatalogService>();
             return SingleChildScrollView(
               padding: const EdgeInsets.all(12),
               child: Column(
@@ -104,9 +107,10 @@ class _CharacterEditorScreenState extends State<CharacterEditorScreen> {
                     title: 'Core',
                     child: Column(
                       children: <Widget>[
-                        IntField(
-                          label: 'Faction',
-                          initialValue: data.faction,
+                        FactionIdDropdown(
+                          catalog: catalog,
+                          label: 'Faction (FactionsConfig)',
+                          value: data.faction,
                           onChanged: (value) =>
                               context.read<CharacterBloc>().add(
                                 CharacterUpdated(data.copyWith(faction: value)),

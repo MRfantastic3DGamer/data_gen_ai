@@ -18,6 +18,13 @@ dependencies:
   intl: ^0.20.1
   json_annotation: ^4.9.0
   share_plus: ^10.1.4
+  file_picker: ^9.0.0
+  path: ^1.9.1
+  shared_preferences: ^2.5.3
+  permission_handler: ^11.4.0
+  google_fonts: ^6.2.1
+  flex_color_scheme: ^8.1.0
+  flutter_animate: ^4.5.2
 
 dev_dependencies:
   flutter_test:

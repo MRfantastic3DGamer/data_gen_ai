@@ -7,7 +7,7 @@ import 'package:data_gen_ai/models/wait_config.dart';
 
 class ActuatorMappingModel {
   const ActuatorMappingModel({
-    this.actionData = const UnityReference(guid: '', fileId: 0),
+    this.action = 0,
     this.actuatorType = 1,
     this.navigateConfig = const NavigateConfigModel(),
     this.waitConfig = const WaitConfigModel(),
@@ -23,7 +23,7 @@ class ActuatorMappingModel {
     this.eatPrimaryResultField = 30,
   });
 
-  final UnityReference actionData;
+  final int action;
   final int actuatorType;
   final NavigateConfigModel navigateConfig;
   final WaitConfigModel waitConfig;
@@ -40,9 +40,7 @@ class ActuatorMappingModel {
 
   factory ActuatorMappingModel.fromJson(Map<String, dynamic> json) =>
       ActuatorMappingModel(
-        actionData: UnityReference.fromJson(
-          json['actionData'] as Map<String, dynamic>?,
-        ),
+        action: (json['action'] ?? 0) as int,
         actuatorType: (json['actuatorType'] ?? 1) as int,
         navigateConfig: NavigateConfigModel.fromJson(
           json['navigateConfig'] as Map<String, dynamic>?,
@@ -77,7 +75,7 @@ class ActuatorMappingModel {
       );
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-    'actionData': actionData.toJson(),
+    'action': action,
     'actuatorType': actuatorType,
     'navigateConfig': navigateConfig.toJson(),
     'waitConfig': waitConfig.toJson(),

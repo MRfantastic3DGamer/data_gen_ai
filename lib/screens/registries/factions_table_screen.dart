@@ -1,0 +1,163 @@
+import 'package:data_gen_ai/blocs/game_data/game_data_bloc.dart';
+import 'package:data_gen_ai/blocs/game_data/game_data_event.dart';
+import 'package:data_gen_ai/models/factions_config_model.dart';
+import 'package:data_gen_ai/repositories/project_repository.dart';
+import 'package:data_gen_ai/repositories/registry_repository.dart';
+import 'package:data_gen_ai/services/registry_catalog_service.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+class FactionsTableScreen extends StatefulWidget {
+  const FactionsTableScreen({
+    super.key,
+    required this.catalog,
+    required this.registryRepository,
+  });
+
+  final RegistryCatalogService catalog;
+  final RegistryRepository registryRepository;
+
+  @override
+  State<FactionsTableScreen> createState() => _FactionsTableScreenState();
+}
+
+class _FactionsTableScreenState extends State<FactionsTableScreen> {
+  late List<FactionDefinitionModel> _rows;
+  var _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _rows = List<FactionDefinitionModel>.from(
+      widget.catalog.factionsFile?.model.factions ?? const <FactionDefinitionModel>[],
+    );
+  }
+
+  Future<void> _save() async {
+    final file = widget.catalog.factionsFile;
+    if (file == null) return;
+
+    setState(() => _saving = true);
+    try {
+      final model = file.model.copyWith(factions: _rows);
+      await widget.registryRepository.saveFactions(file: file, model: model);
+      await widget.catalog.reload(context.read<ProjectRepository>());
+      if (mounted) {
+        context.read<GameDataBloc>().add(const GameDataReloadRequested());
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Factions saved to JSON')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Save failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final file = widget.catalog.factionsFile;
+    if (file == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Factions')),
+        body: const Center(
+          child: Text('FactionsConfig.json not found in your RAW folder.'),
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Factions table'),
+        actions: <Widget>[
+          IconButton(
+            onPressed: _saving ? null : _save,
+            icon: _saving
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.save),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          final maxId = _rows.fold<int>(0, (m, f) => f.id > m ? f.id : m);
+          setState(() {
+            _rows.add(
+              FactionDefinitionModel(id: maxId + 1, name: 'Faction_${maxId + 1}'),
+            );
+          });
+        },
+        child: const Icon(Icons.add),
+      ),
+      body: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
+          columns: const <DataColumn>[
+            DataColumn(label: Text('Id')),
+            DataColumn(label: Text('Name')),
+            DataColumn(label: Text('')),
+          ],
+          rows: _rows.asMap().entries.map((entry) {
+            final index = entry.key;
+            final row = entry.value;
+            return DataRow(
+              cells: <DataCell>[
+                DataCell(
+                  SizedBox(
+                    width: 64,
+                    child: TextFormField(
+                      initialValue: row.id.toString(),
+                      keyboardType: TextInputType.number,
+                      onChanged: (v) {
+                        final id = int.tryParse(v) ?? row.id;
+                        setState(() {
+                          _rows[index] = FactionDefinitionModel(
+                            id: id,
+                            name: row.name,
+                            editorColor: row.editorColor,
+                          );
+                        });
+                      },
+                    ),
+                  ),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 200,
+                    child: TextFormField(
+                      initialValue: row.name,
+                      onChanged: (v) {
+                        setState(() {
+                          _rows[index] = FactionDefinitionModel(
+                            id: row.id,
+                            name: v,
+                            editorColor: row.editorColor,
+                          );
+                        });
+                      },
+                    ),
+                  ),
+                ),
+                DataCell(
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: () => setState(() => _rows.removeAt(index)),
+                  ),
+                ),
+              ],
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+}
