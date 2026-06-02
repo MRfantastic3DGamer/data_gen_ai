@@ -13,18 +13,32 @@ class HomeScreen extends StatelessWidget {
         children: <Widget>[
           _tile(
             context,
+            'Actions & Beliefs',
+            'Search, filter, and edit exported JSON',
+            Icons.play_circle_outline,
+            '/actions',
+          ),
+          _tile(
+            context,
+            'JSON data folder',
+            'Point at the RAW folder copied from Unity',
+            Icons.folder_open_outlined,
+            '/data-folder',
+          ),
+          _tile(
+            context,
             'Characters',
+            'Character JSON assets',
             Icons.people_alt_outlined,
             '/characters',
           ),
-          _tile(context, 'Items', Icons.inventory_2_outlined, '/items'),
           _tile(
             context,
-            'All Scriptable Objects',
-            Icons.folder_open_outlined,
+            'All JSON files',
+            'Browse every exported file',
+            Icons.description_outlined,
             '/browser',
           ),
-          _tile(context, 'AI Workspace', Icons.smart_toy_outlined, '/ai'),
         ],
       ),
     );
@@ -33,6 +47,7 @@ class HomeScreen extends StatelessWidget {
   Widget _tile(
     BuildContext context,
     String title,
+    String subtitle,
     IconData icon,
     String route,
   ) {
@@ -40,6 +55,7 @@ class HomeScreen extends StatelessWidget {
       child: ListTile(
         leading: Icon(icon),
         title: Text(title),
+        subtitle: Text(subtitle),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => context.push(route),
       ),

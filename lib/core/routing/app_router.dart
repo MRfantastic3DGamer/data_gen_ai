@@ -1,4 +1,5 @@
-import 'package:data_gen_ai/screens/ai_chat/ai_chat_screen.dart';
+import 'package:data_gen_ai/screens/actions/actions_hub_screen.dart';
+import 'package:data_gen_ai/screens/actions/so_detail_editor_screen.dart';
 import 'package:data_gen_ai/screens/browser/so_browser_screen.dart';
 import 'package:data_gen_ai/screens/character/character_editor_screen.dart';
 import 'package:data_gen_ai/screens/character/character_list_screen.dart';
@@ -6,6 +7,7 @@ import 'package:data_gen_ai/screens/generic_editor/generic_editor_screen.dart';
 import 'package:data_gen_ai/screens/home/home_screen.dart';
 import 'package:data_gen_ai/screens/item/item_editor_screen.dart';
 import 'package:data_gen_ai/screens/item/item_list_screen.dart';
+import 'package:data_gen_ai/screens/settings/data_folder_screen.dart';
 import 'package:go_router/go_router.dart';
 
 class AppRouter {
@@ -15,6 +17,18 @@ class AppRouter {
     initialLocation: '/',
     routes: <RouteBase>[
       GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
+      GoRoute(
+        path: '/actions',
+        builder: (context, state) => const ActionsHubScreen(),
+      ),
+      GoRoute(
+        path: '/so-edit',
+        builder: (context, state) => const SODetailEditorScreen(),
+      ),
+      GoRoute(
+        path: '/data-folder',
+        builder: (context, state) => const DataFolderScreen(),
+      ),
       GoRoute(
         path: '/characters',
         builder: (context, state) => const CharacterListScreen(),
@@ -39,7 +53,6 @@ class AppRouter {
         path: '/generic',
         builder: (context, state) => const GenericEditorScreen(),
       ),
-      GoRoute(path: '/ai', builder: (context, state) => const AIChatScreen()),
     ],
   );
 }
