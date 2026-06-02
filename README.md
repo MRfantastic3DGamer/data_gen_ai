@@ -39,3 +39,6 @@ On-device LLM integration (`flutter_gemma`, `AIRepository`) is kept in the codeb
 - `BeliefSO` — query, field, condition, values
 
 Other types open a raw JSON payload view until dedicated forms are added.
+
+# Keep this up to date!
+## WHENEVER THE GAME SCRIPTABLE OBJECTS ARE UPDATED, THIS ALSO NEEDS TO BE UPDATED
