@@ -1,6 +1,11 @@
 import 'package:data_gen_ai/core/enums/actuator_type.dart';
 import 'package:data_gen_ai/models/actuator_mapping.dart';
+import 'package:data_gen_ai/models/eat_config.dart';
+import 'package:data_gen_ai/models/nav_config.dart';
+import 'package:data_gen_ai/models/play_animation_config.dart';
+import 'package:data_gen_ai/models/reserve_slot_config.dart';
 import 'package:data_gen_ai/models/unity_reference.dart';
+import 'package:data_gen_ai/models/wait_config.dart';
 import 'package:data_gen_ai/widgets/forms/action_id_dropdown.dart';
 import 'package:data_gen_ai/widgets/forms/config/eat_config_form.dart';
 import 'package:data_gen_ai/widgets/forms/config/navigate_config_form.dart';
