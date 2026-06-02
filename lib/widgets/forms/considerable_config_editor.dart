@@ -1,7 +1,6 @@
 import 'package:data_gen_ai/models/considerable_so.dart';
-import 'package:data_gen_ai/models/unity_reference.dart';
 import 'package:data_gen_ai/widgets/forms/float_field.dart';
-import 'package:data_gen_ai/widgets/forms/reference_field.dart';
+import 'package:data_gen_ai/widgets/forms/asset_reference_field.dart';
 import 'package:data_gen_ai/widgets/forms/utility_ai_result_field_dropdown.dart';
 import 'package:flutter/material.dart';
 
@@ -32,18 +31,16 @@ class ConsiderableConfigEditor extends StatelessWidget {
             ),
           ),
         ),
-        ReferenceField(
+        AssetReferenceField(
           label: 'Query input',
           reference: config.queryInput,
-          onGuidChanged: (guid) => onChanged(
+          includeQueryViews: true,
+          onChanged: (ref) => onChanged(
             ConsiderableConfigModel(
               defaultValue: config.defaultValue,
               minValue: config.minValue,
               maxValue: config.maxValue,
-              queryInput: UnityReference(
-                guid: guid,
-                fileId: guid.isEmpty ? 0 : 11400000,
-              ),
+              queryInput: ref,
               field: config.field,
             ),
           ),

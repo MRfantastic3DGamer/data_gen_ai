@@ -1,5 +1,6 @@
-import 'package:data_gen_ai/models/registry_option.dart';
+import 'package:data_gen_ai/models/asset_picker_option.dart';
 import 'package:data_gen_ai/services/registry_catalog_service.dart';
+import 'package:data_gen_ai/widgets/forms/searchable_int_dropdown.dart';
 import 'package:flutter/material.dart';
 
 class AnimationTypeIdDropdown extends StatelessWidget {
@@ -9,52 +10,45 @@ class AnimationTypeIdDropdown extends StatelessWidget {
     required this.value,
     required this.onChanged,
     this.label = 'Animation type',
-    this.factionId,
     this.typesConfigGuid,
+    this.factionId,
   });
 
   final RegistryCatalogService catalog;
   final int value;
   final ValueChanged<int> onChanged;
   final String label;
-  final int? factionId;
   final String? typesConfigGuid;
+  final int? factionId;
 
   @override
   Widget build(BuildContext context) {
-    final options = catalog.animationTypeOptions(
-      factionId: factionId,
+    final registryOptions = catalog.animationTypeOptions(
       typesConfigGuid: typesConfigGuid,
+      factionId: factionId,
     );
-    if (options.length <= 1) {
+    if (registryOptions.length <= 1) {
       return ListTile(
         title: Text(label),
-        subtitle: Text(
-          factionId != null
-              ? 'No Animation Types config for faction ${catalog.factionLabel(factionId!)}.'
-              : 'No Animation Types config JSON found.',
-        ),
+        subtitle: const Text('No AnimationTypesConfig found for this faction.'),
       );
     }
 
-    final selected = options.any((o) => o.value == value)
-        ? value
-        : options.first.value;
+    final options = registryOptions
+        .map(
+          (o) => SearchableOption<int>(
+            value: o.value,
+            label: o.label,
+            searchTerms: '${o.value}',
+          ),
+        )
+        .toList();
 
-    return DropdownButtonFormField<int>(
-      value: selected,
-      decoration: InputDecoration(labelText: label),
-      items: options
-          .map(
-            (RegistryOption<int> o) => DropdownMenuItem<int>(
-              value: o.value,
-              child: Text(o.label),
-            ),
-          )
-          .toList(),
-      onChanged: (v) {
-        if (v != null) onChanged(v);
-      },
+    return SearchableIntDropdown(
+      label: label,
+      value: value,
+      options: options,
+      onChanged: onChanged,
     );
   }
 }

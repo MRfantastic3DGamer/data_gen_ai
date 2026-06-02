@@ -206,7 +206,7 @@ class _FactionsTableScreenState extends State<FactionsTableScreen> {
               itemBuilder: (context, index) {
                 return FactionRelationshipEditor(
                   relationship: _relationships[index],
-                  factionOptions: widget.catalog.factionOptions(allowNone: false),
+                  catalog: widget.catalog,
                   onChanged: (r) {
                     setState(() {
                       _relationships[index] = r;

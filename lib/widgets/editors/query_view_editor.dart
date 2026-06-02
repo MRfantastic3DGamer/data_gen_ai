@@ -21,12 +21,13 @@ import 'package:data_gen_ai/services/registry_catalog_service.dart';
 import 'package:data_gen_ai/widgets/editors/so_editor_utils.dart';
 import 'package:data_gen_ai/widgets/forms/bool_toggle.dart';
 import 'package:data_gen_ai/widgets/forms/enum_dropdown.dart';
+import 'package:data_gen_ai/widgets/forms/searchable_enum_dropdown.dart';
 import 'package:data_gen_ai/widgets/forms/faction_id_dropdown.dart';
 import 'package:data_gen_ai/widgets/forms/flags_enum_checkbox_group.dart';
 import 'package:data_gen_ai/widgets/forms/float_field.dart';
-import 'package:data_gen_ai/widgets/forms/int_field.dart';
+import 'package:data_gen_ai/widgets/forms/item_type_id_picker.dart';
 import 'package:data_gen_ai/widgets/forms/item_category_definition_editor.dart';
-import 'package:data_gen_ai/widgets/forms/reference_field.dart';
+import 'package:data_gen_ai/widgets/forms/asset_reference_field.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:data_gen_ai/widgets/forms/vector2_field.dart';
 import 'package:flutter/material.dart';
@@ -104,14 +105,10 @@ class _QueryViewEditorFormState extends State<QueryViewEditorForm> {
         final item = SensorItemQueryViewModel.fromJson(payload);
         return Column(
           children: <Widget>[
-            IntField(
-              label: 'Item type ID',
-              initialValue: item.itemTypeId,
-              onChanged: (v) => _merge(
-                item
-                    .copyWith(itemTypeId: v)
-                    .toJson(),
-              ),
+            ItemTypeIdPicker(
+              label: 'Item type',
+              value: item.itemTypeId,
+              onChanged: (v) => _merge(item.copyWith(itemTypeId: v).toJson()),
             ),
             BoolToggle(
               label: 'In line of sight',
@@ -119,7 +116,7 @@ class _QueryViewEditorFormState extends State<QueryViewEditorForm> {
               onChanged: (v) =>
                   _merge(item.copyWith(inLineOfSight: v).toJson()),
             ),
-            EnumDropdown(
+            SearchableEnumDropdown(
               label: 'Mode',
               value: item.averagesOfAll ? 1 : 0,
               options: {
@@ -190,7 +187,7 @@ class _QueryViewEditorFormState extends State<QueryViewEditorForm> {
               onChanged: (v) =>
                   _merge(agent.copyWith(inLineOfSight: v).toJson()),
             ),
-            EnumDropdown(
+            SearchableEnumDropdown(
               label: 'Mode',
               value: agent.mode,
               options: {
@@ -328,19 +325,13 @@ class _QueryViewEditorFormState extends State<QueryViewEditorForm> {
         final sched = ScheduleQueryViewModel.fromJson(payload);
         return Column(
           children: <Widget>[
-            ReferenceField(
+            AssetReferenceField(
               label: 'Schedule asset',
               reference: sched.schedule,
-              onGuidChanged: (guid) => _merge(
-                sched
-                    .copyWith(
-                      schedule: UnityReference(
-                        guid: guid,
-                        fileId: guid.isEmpty ? 0 : 11400000,
-                      ),
-                    )
-                    .toJson(),
-              ),
+              typeKeys: const <String>['ScheduleQueryViewSO'],
+              includeQueryViews: true,
+              onChanged: (ref) =>
+                  _merge(sched.copyWith(schedule: ref).toJson()),
             ),
             TextFormField(
               initialValue: sched.pointGroup,
@@ -359,19 +350,12 @@ class _QueryViewEditorFormState extends State<QueryViewEditorForm> {
         final work = WorkpostQueryViewModel.fromJson(payload);
         return Column(
           children: <Widget>[
-            ReferenceField(
+            AssetReferenceField(
               label: 'Work types config',
               reference: work.workTypes,
-              onGuidChanged: (guid) => _merge(
-                work
-                    .copyWith(
-                      workTypes: UnityReference(
-                        guid: guid,
-                        fileId: guid.isEmpty ? 0 : 11400000,
-                      ),
-                    )
-                    .toJson(),
-              ),
+              typeKeys: const <String>['WorkTypesConfig'],
+              onChanged: (ref) =>
+                  _merge(work.copyWith(workTypes: ref).toJson()),
             ),
             IntField(
               label: 'Type filter bit index',

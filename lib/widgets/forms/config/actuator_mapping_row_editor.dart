@@ -13,7 +13,7 @@ import 'package:data_gen_ai/widgets/forms/config/play_animation_config_form.dart
 import 'package:data_gen_ai/widgets/forms/config/reserve_slot_config_form.dart';
 import 'package:data_gen_ai/widgets/forms/config/wait_config_form.dart';
 import 'package:data_gen_ai/widgets/forms/enum_dropdown.dart';
-import 'package:data_gen_ai/widgets/forms/reference_field.dart';
+import 'package:data_gen_ai/widgets/forms/asset_reference_field.dart';
 import 'package:data_gen_ai/widgets/forms/utility_ai_result_field_dropdown.dart';
 import 'package:flutter/material.dart';
 
@@ -102,17 +102,11 @@ class ActuatorMappingRowEditor extends StatelessWidget {
                 config: value.navigateConfig,
                 onChanged: (c) => onChanged(_copy(navigateConfig: c)),
               ),
-              ReferenceField(
+              AssetReferenceField(
                 label: 'Navigate query view',
                 reference: value.navigateQueryView,
-                onGuidChanged: (guid) => onChanged(
-                  _copy(
-                    navigateQueryView: UnityReference(
-                      guid: guid,
-                      fileId: guid.isEmpty ? 0 : 11400000,
-                    ),
-                  ),
-                ),
+                includeQueryViews: true,
+                onChanged: (ref) => onChanged(_copy(navigateQueryView: ref)),
               ),
               UtilityAIResultFieldDropdown(
                 label: 'Navigate result field',

@@ -1,12 +1,12 @@
-import 'package:data_gen_ai/core/enums/result_field.dart';
 import 'package:data_gen_ai/models/actionable_so.dart';
 import 'package:data_gen_ai/models/game_data_file_entry.dart';
 import 'package:data_gen_ai/models/unity_reference.dart';
 import 'package:data_gen_ai/widgets/forms/action_id_dropdown.dart';
 import 'package:data_gen_ai/widgets/forms/float_field.dart';
-import 'package:data_gen_ai/widgets/forms/reference_field.dart';
-import 'package:data_gen_ai/widgets/forms/reference_list_editor.dart';
+import 'package:data_gen_ai/widgets/forms/asset_reference_field.dart';
+import 'package:data_gen_ai/widgets/forms/asset_reference_list_editor.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
+import 'package:data_gen_ai/widgets/forms/utility_ai_result_field_dropdown.dart';
 import 'package:flutter/material.dart';
 
 class ActionableEditorForm extends StatefulWidget {
@@ -60,17 +60,19 @@ class _ActionableEditorFormState extends State<ActionableEditorForm> {
         ),
         SectionCard(
           title: 'Provided beliefs',
-          child: ReferenceListEditor(
+          child: AssetReferenceListEditor(
             references: _model.providedBeliefAssets,
             label: 'Belief SO',
+            typeKeys: const <String>['BeliefSO'],
             onChanged: (refs) => _update(_copy(providedBeliefAssets: refs)),
           ),
         ),
         SectionCard(
           title: 'Required beliefs',
-          child: ReferenceListEditor(
+          child: AssetReferenceListEditor(
             references: _model.requiredBeliefAssets,
             label: 'Belief SO',
+            typeKeys: const <String>['BeliefSO'],
             onChanged: (refs) => _update(_copy(requiredBeliefAssets: refs)),
           ),
         ),
@@ -83,32 +85,16 @@ class _ActionableEditorFormState extends State<ActionableEditorForm> {
                 initialValue: _model.constCost,
                 onChanged: (v) => _update(_copy(constCost: v)),
               ),
-              ReferenceField(
+              AssetReferenceField(
                 label: 'Cost query',
                 reference: _model.costQuery,
-                onGuidChanged: (guid) => _update(
-                  _copy(
-                    costQuery: UnityReference(
-                      guid: guid,
-                      fileId: guid.isEmpty ? 0 : 11400000,
-                    ),
-                  ),
-                ),
+                includeQueryViews: true,
+                onChanged: (ref) => _update(_copy(costQuery: ref)),
               ),
-              DropdownButtonFormField<int>(
+              UtilityAIResultFieldDropdown(
+                label: 'Cost field',
                 value: _model.costField,
-                decoration: const InputDecoration(labelText: 'Cost field'),
-                items: UtilityAIResultField.values
-                    .map(
-                      (f) => DropdownMenuItem<int>(
-                        value: f.value,
-                        child: Text(f.name),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (v) {
-                  if (v != null) _update(_copy(costField: v));
-                },
+                onChanged: (v) => _update(_copy(costField: v)),
               ),
               FloatField(
                 label: 'Cost field multiplier',
@@ -127,32 +113,16 @@ class _ActionableEditorFormState extends State<ActionableEditorForm> {
                 initialValue: _model.constTime,
                 onChanged: (v) => _update(_copy(constTime: v)),
               ),
-              ReferenceField(
+              AssetReferenceField(
                 label: 'Time query',
                 reference: _model.timeQuery,
-                onGuidChanged: (guid) => _update(
-                  _copy(
-                    timeQuery: UnityReference(
-                      guid: guid,
-                      fileId: guid.isEmpty ? 0 : 11400000,
-                    ),
-                  ),
-                ),
+                includeQueryViews: true,
+                onChanged: (ref) => _update(_copy(timeQuery: ref)),
               ),
-              DropdownButtonFormField<int>(
+              UtilityAIResultFieldDropdown(
+                label: 'Time field',
                 value: _model.timeField,
-                decoration: const InputDecoration(labelText: 'Time field'),
-                items: UtilityAIResultField.values
-                    .map(
-                      (f) => DropdownMenuItem<int>(
-                        value: f.value,
-                        child: Text(f.name),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (v) {
-                  if (v != null) _update(_copy(timeField: v));
-                },
+                onChanged: (v) => _update(_copy(timeField: v)),
               ),
               FloatField(
                 label: 'Time field multiplier',

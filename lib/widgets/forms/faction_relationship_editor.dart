@@ -1,20 +1,21 @@
 import 'package:data_gen_ai/core/enums/sensor_query_mode.dart';
 import 'package:data_gen_ai/models/factions_config_model.dart';
-import 'package:data_gen_ai/models/registry_option.dart';
-import 'package:data_gen_ai/widgets/forms/enum_dropdown.dart';
+import 'package:data_gen_ai/services/registry_catalog_service.dart';
+import 'package:data_gen_ai/widgets/forms/faction_id_dropdown.dart';
+import 'package:data_gen_ai/widgets/forms/searchable_enum_dropdown.dart';
 import 'package:flutter/material.dart';
 
 class FactionRelationshipEditor extends StatelessWidget {
   const FactionRelationshipEditor({
     super.key,
     required this.relationship,
-    required this.factionOptions,
+    required this.catalog,
     required this.onChanged,
     required this.onDelete,
   });
 
   final FactionRelationshipModel relationship;
-  final List<RegistryOption<int>> factionOptions;
+  final RegistryCatalogService catalog;
   final ValueChanged<FactionRelationshipModel> onChanged;
   final VoidCallback onDelete;
 
@@ -25,45 +26,34 @@ class FactionRelationshipEditor extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(8),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Expanded(
-              child: DropdownButtonFormField<int>(
-                initialValue: relationship.a,
-                decoration: const InputDecoration(labelText: 'Faction A'),
-                items: factionOptions
-                    .map(
-                      (o) => DropdownMenuItem<int>(
-                        value: o.value,
-                        child: Text(o.label),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (v) {
-                  if (v != null) onChanged(FactionRelationshipModel(a: v, b: relationship.b, type: relationship.type));
-                },
+              child: FactionIdDropdown(
+                catalog: catalog,
+                label: 'Faction A',
+                value: relationship.a,
+                allowNone: false,
+                onChanged: (v) => onChanged(
+                  FactionRelationshipModel(a: v, b: relationship.b, type: relationship.type),
+                ),
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: DropdownButtonFormField<int>(
-                initialValue: relationship.b,
-                decoration: const InputDecoration(labelText: 'Faction B'),
-                items: factionOptions
-                    .map(
-                      (o) => DropdownMenuItem<int>(
-                        value: o.value,
-                        child: Text(o.label),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (v) {
-                  if (v != null) onChanged(FactionRelationshipModel(a: relationship.a, b: v, type: relationship.type));
-                },
+              child: FactionIdDropdown(
+                catalog: catalog,
+                label: 'Faction B',
+                value: relationship.b,
+                allowNone: false,
+                onChanged: (v) => onChanged(
+                  FactionRelationshipModel(a: relationship.a, b: v, type: relationship.type),
+                ),
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: EnumDropdown(
+              child: SearchableEnumDropdown(
                 label: 'Relationship',
                 value: relationship.type,
                 options: {

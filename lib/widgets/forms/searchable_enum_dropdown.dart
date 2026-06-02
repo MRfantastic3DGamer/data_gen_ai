@@ -1,28 +1,30 @@
-import 'package:data_gen_ai/core/enums/result_field.dart';
 import 'package:data_gen_ai/models/asset_picker_option.dart';
 import 'package:data_gen_ai/widgets/forms/searchable_int_dropdown.dart';
 import 'package:flutter/material.dart';
 
-class UtilityAIResultFieldDropdown extends StatelessWidget {
-  const UtilityAIResultFieldDropdown({
+/// Searchable version of [EnumDropdown] for long enum lists.
+class SearchableEnumDropdown extends StatelessWidget {
+  const SearchableEnumDropdown({
     super.key,
     required this.label,
     required this.value,
+    required this.options,
     required this.onChanged,
   });
 
   final String label;
   final int value;
+  final Map<int, String> options;
   final ValueChanged<int> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    final options = UtilityAIResultField.values
+    final searchable = options.entries
         .map(
-          (f) => SearchableOption<int>(
-            value: f.value,
-            label: f.name,
-            searchTerms: '${f.value}',
+          (e) => SearchableOption<int>(
+            value: e.key,
+            label: e.value,
+            searchTerms: '${e.key}',
           ),
         )
         .toList();
@@ -30,7 +32,7 @@ class UtilityAIResultFieldDropdown extends StatelessWidget {
     return SearchableIntDropdown(
       label: label,
       value: value,
-      options: options,
+      options: searchable,
       onChanged: onChanged,
     );
   }

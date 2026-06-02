@@ -66,6 +66,19 @@ class FileService {
     return files;
   }
 
+  Future<List<File>> listMetaFiles() async {
+    final root = await getRawRootDirectory();
+    if (!await root.exists()) return <File>[];
+
+    final files = <File>[];
+    await for (final entity in root.list(recursive: true, followLinks: false)) {
+      if (entity is File && entity.path.endsWith('.meta')) {
+        files.add(entity);
+      }
+    }
+    return files;
+  }
+
   Future<String> readFile(String path) async {
     if (Platform.isAndroid) {
       await _ensureCanAccessExternalPath(File(path).parent.path);

@@ -12,6 +12,7 @@ import 'package:data_gen_ai/core/theme/app_theme.dart';
 import 'package:data_gen_ai/repositories/ai_repository.dart';
 import 'package:data_gen_ai/repositories/project_repository.dart';
 import 'package:data_gen_ai/repositories/registry_repository.dart';
+import 'package:data_gen_ai/services/asset_index_service.dart';
 import 'package:data_gen_ai/services/file_service.dart';
 import 'package:data_gen_ai/services/gemma_service.dart';
 import 'package:data_gen_ai/services/json_converter.dart';
@@ -37,6 +38,9 @@ class GameDataEditorApp extends StatelessWidget {
     return MultiRepositoryProvider(
       providers: <RepositoryProvider<dynamic>>[
         RepositoryProvider<FileService>.value(value: fileService),
+        RepositoryProvider<AssetIndexService>(
+          create: (c) => AssetIndexService(c.read<FileService>()),
+        ),
         RepositoryProvider<JsonConverterService>.value(value: jsonConverter),
         RepositoryProvider<ProjectRepository>.value(value: projectRepository),
         RepositoryProvider<RegistryCatalogService>.value(value: registryCatalog),
@@ -53,8 +57,12 @@ class GameDataEditorApp extends StatelessWidget {
             },
           ),
           BlocProvider<GameDataBloc>(
-            create: (_) {
-              final bloc = GameDataBloc(projectRepository, registryCatalog);
+            create: (c) {
+              final bloc = GameDataBloc(
+                projectRepository,
+                registryCatalog,
+                c.read<AssetIndexService>(),
+              );
               bloc.add(const GameDataStarted());
               return bloc;
             },

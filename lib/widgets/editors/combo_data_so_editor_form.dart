@@ -4,7 +4,7 @@ import 'package:data_gen_ai/models/unity_reference.dart';
 import 'package:data_gen_ai/widgets/editors/so_editor_utils.dart';
 import 'package:data_gen_ai/widgets/forms/combo_state_grid_editor.dart';
 import 'package:data_gen_ai/widgets/forms/int_field.dart';
-import 'package:data_gen_ai/widgets/forms/reference_field.dart';
+import 'package:data_gen_ai/widgets/forms/asset_reference_field.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:flutter/material.dart';
 
@@ -55,29 +55,17 @@ class _ComboDataSOEditorFormState extends State<ComboDataSOEditorForm> {
                 initialValue: _model.priority,
                 onChanged: (v) => _update(_model.copyWith(priority: v)),
               ),
-              ReferenceField(
+              AssetReferenceField(
                 label: 'Animation clip',
                 reference: _model.animationClip,
-                onGuidChanged: (guid) => _update(
-                  _model.copyWith(
-                    animationClip: UnityReference(
-                      guid: guid,
-                      fileId: guid.isEmpty ? 0 : 11400000,
-                    ),
-                  ),
-                ),
+                onChanged: (ref) => _update(_model.copyWith(animationClip: ref)),
               ),
-              ReferenceField(
+              AssetReferenceField(
                 label: 'Referenced combo',
                 reference: _model.referencedCombo,
-                onGuidChanged: (guid) => _update(
-                  _model.copyWith(
-                    referencedCombo: UnityReference(
-                      guid: guid,
-                      fileId: guid.isEmpty ? 0 : 11400000,
-                    ),
-                  ),
-                ),
+                typeKeys: const <String>['ComboDataSO'],
+                onChanged: (ref) =>
+                    _update(_model.copyWith(referencedCombo: ref)),
               ),
             ],
           ),

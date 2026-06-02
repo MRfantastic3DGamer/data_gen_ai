@@ -1,12 +1,12 @@
 import 'package:data_gen_ai/core/enums/belief_condition.dart';
-import 'package:data_gen_ai/core/enums/result_field.dart';
+import 'package:data_gen_ai/widgets/forms/utility_ai_result_field_dropdown.dart';
 import 'package:data_gen_ai/models/belief_so.dart';
 import 'package:data_gen_ai/models/unity_reference.dart';
 import 'package:data_gen_ai/models/game_data_file_entry.dart';
 import 'package:data_gen_ai/widgets/forms/bool_toggle.dart';
 import 'package:data_gen_ai/widgets/forms/float_field.dart';
 import 'package:data_gen_ai/widgets/forms/int_field.dart';
-import 'package:data_gen_ai/widgets/forms/reference_field.dart';
+import 'package:data_gen_ai/widgets/forms/asset_reference_field.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:data_gen_ai/widgets/forms/vector2_field.dart';
 import 'package:data_gen_ai/widgets/forms/vector3_field.dart';
@@ -55,15 +55,13 @@ class _BeliefEditorFormState extends State<BeliefEditorForm> {
       children: <Widget>[
         SectionCard(
           title: 'Query',
-          child: ReferenceField(
+          child: AssetReferenceField(
             label: 'Query view',
             reference: _model.queryViewAsset,
-            onGuidChanged: (guid) => _update(
+            includeQueryViews: true,
+            onChanged: (ref) => _update(
               BeliefSOModel(
-                queryViewAsset: UnityReference(
-                  guid: guid,
-                  fileId: guid.isEmpty ? 0 : 11400000,
-                ),
+                queryViewAsset: ref,
                 field: _model.field,
                 condition: _model.condition,
                 isVectorValue: _model.isVectorValue,
@@ -83,20 +81,10 @@ class _BeliefEditorFormState extends State<BeliefEditorForm> {
           title: 'Condition',
           child: Column(
             children: <Widget>[
-              DropdownButtonFormField<int>(
+              UtilityAIResultFieldDropdown(
+                label: 'Result field',
                 value: _model.field,
-                decoration: const InputDecoration(labelText: 'Result field'),
-                items: UtilityAIResultField.values
-                    .map(
-                      (f) => DropdownMenuItem<int>(
-                        value: f.value,
-                        child: Text(f.name),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (v) {
-                  if (v != null) _update(_copy(field: v));
-                },
+                onChanged: (v) => _update(_copy(field: v)),
               ),
               DropdownButtonFormField<int>(
                 value: _model.condition,

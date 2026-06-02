@@ -6,7 +6,7 @@ import 'package:data_gen_ai/widgets/editors/so_editor_utils.dart';
 import 'package:data_gen_ai/widgets/forms/animation_type_id_dropdown.dart';
 import 'package:data_gen_ai/widgets/forms/list_editor.dart';
 import 'package:data_gen_ai/widgets/forms/raw_map_config_editor.dart';
-import 'package:data_gen_ai/widgets/forms/reference_field.dart';
+import 'package:data_gen_ai/widgets/forms/asset_reference_field.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -101,17 +101,12 @@ class _MoveLibrarySOEditorFormState extends State<MoveLibrarySOEditorForm> {
                         _update(_model.copyWith(moves: list));
                       },
                     ),
-                    ReferenceField(
+                    AssetReferenceField(
                       label: 'Clip',
                       reference: move.clip,
-                      onGuidChanged: (guid) {
+                      onChanged: (ref) {
                         final list = List<MoveConfigModel>.from(_model.moves);
-                        list[index] = move.copyWith(
-                          clip: UnityReference(
-                            guid: guid,
-                            fileId: guid.isEmpty ? 0 : 11400000,
-                          ),
-                        );
+                        list[index] = move.copyWith(clip: ref);
                         _update(_model.copyWith(moves: list));
                       },
                     ),

@@ -7,7 +7,7 @@ import 'package:data_gen_ai/widgets/forms/considerable_config_editor.dart';
 import 'package:data_gen_ai/widgets/forms/consideration_function_config_editor.dart';
 import 'package:data_gen_ai/widgets/forms/data_source_toggle.dart';
 import 'package:data_gen_ai/widgets/forms/list_editor.dart';
-import 'package:data_gen_ai/widgets/forms/reference_field.dart';
+import 'package:data_gen_ai/widgets/forms/asset_reference_field.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:flutter/material.dart';
 
@@ -47,15 +47,13 @@ class _BeliefSelectionEditorFormState extends State<BeliefSelectionEditorForm> {
       children: <Widget>[
         SectionCard(
           title: 'Belief',
-          child: ReferenceField(
+          child: AssetReferenceField(
             label: 'Belief asset',
             reference: _model.belief,
-            onGuidChanged: (guid) => _update(
+            typeKeys: const <String>['BeliefSO'],
+            onChanged: (ref) => _update(
               BeliefSelectionSOModel(
-                belief: UnityReference(
-                  guid: guid,
-                  fileId: guid.isEmpty ? 0 : 11400000,
-                ),
+                belief: ref,
                 considerables: _model.considerables,
               ),
             ),
@@ -126,19 +124,17 @@ class _BeliefSelectionEditorFormState extends State<BeliefSelectionEditorForm> {
                       },
                     ),
                     if (item.considerableSource == 0)
-                      ReferenceField(
+                      AssetReferenceField(
                         label: 'Considerable asset',
                         reference: item.considerableAsset,
-                        onGuidChanged: (guid) {
+                        typeKeys: const <String>['ConsiderableSO'],
+                        onChanged: (ref) {
                           final list = List<ConsiderationItemModel>.from(
                             _model.considerables,
                           );
                           list[index] = ConsiderationItemModel(
                             considerableSource: item.considerableSource,
-                            considerableAsset: UnityReference(
-                              guid: guid,
-                              fileId: guid.isEmpty ? 0 : 11400000,
-                            ),
+                            considerableAsset: ref,
                             considerableInline: item.considerableInline,
                             functionSource: item.functionSource,
                             functionAsset: item.functionAsset,
@@ -201,10 +197,11 @@ class _BeliefSelectionEditorFormState extends State<BeliefSelectionEditorForm> {
                       },
                     ),
                     if (item.functionSource == 0)
-                      ReferenceField(
+                      AssetReferenceField(
                         label: 'Function asset',
                         reference: item.functionAsset,
-                        onGuidChanged: (guid) {
+                        typeKeys: const <String>['ConsiderationFunctionSO'],
+                        onChanged: (ref) {
                           final list = List<ConsiderationItemModel>.from(
                             _model.considerables,
                           );
@@ -213,10 +210,7 @@ class _BeliefSelectionEditorFormState extends State<BeliefSelectionEditorForm> {
                             considerableAsset: item.considerableAsset,
                             considerableInline: item.considerableInline,
                             functionSource: item.functionSource,
-                            functionAsset: UnityReference(
-                              guid: guid,
-                              fileId: guid.isEmpty ? 0 : 11400000,
-                            ),
+                            functionAsset: ref,
                             functionInline: item.functionInline,
                           );
                           _update(

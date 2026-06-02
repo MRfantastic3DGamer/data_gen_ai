@@ -6,7 +6,7 @@ import 'package:data_gen_ai/widgets/editors/so_editor_utils.dart';
 import 'package:data_gen_ai/widgets/forms/animation_type_id_dropdown.dart';
 import 'package:data_gen_ai/widgets/forms/faction_id_dropdown.dart';
 import 'package:data_gen_ai/widgets/forms/list_editor.dart';
-import 'package:data_gen_ai/widgets/forms/reference_field.dart';
+import 'package:data_gen_ai/widgets/forms/asset_reference_field.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -57,29 +57,18 @@ class _CharacterAnimationDatabaseEditorFormState
                 value: _model.characterFaction,
                 onChanged: (v) => _update(_model.copyWith(characterFaction: v)),
               ),
-              ReferenceField(
+              AssetReferenceField(
                 label: 'Animation types config',
                 reference: _model.animationTypes,
-                onGuidChanged: (guid) => _update(
-                  _model.copyWith(
-                    animationTypes: UnityReference(
-                      guid: guid,
-                      fileId: guid.isEmpty ? 0 : 11400000,
-                    ),
-                  ),
-                ),
+                typeKeys: const <String>['AnimationTypesConfig'],
+                onChanged: (ref) =>
+                    _update(_model.copyWith(animationTypes: ref)),
               ),
-              ReferenceField(
+              AssetReferenceField(
                 label: 'Animation data JSON',
                 reference: _model.animationDataJson,
-                onGuidChanged: (guid) => _update(
-                  _model.copyWith(
-                    animationDataJson: UnityReference(
-                      guid: guid,
-                      fileId: guid.isEmpty ? 0 : 11400000,
-                    ),
-                  ),
-                ),
+                onChanged: (ref) =>
+                    _update(_model.copyWith(animationDataJson: ref)),
               ),
             ],
           ),
@@ -115,19 +104,14 @@ class _CharacterAnimationDatabaseEditorFormState
                         _update(_model.copyWith(animations: list));
                       },
                     ),
-                    ReferenceField(
+                    AssetReferenceField(
                       label: 'Clip',
                       reference: row.clip,
-                      onGuidChanged: (guid) {
+                      onChanged: (ref) {
                         final list = List<AnimationEntryModel>.from(
                           _model.animations,
                         );
-                        list[index] = row.copyWith(
-                          clip: UnityReference(
-                            guid: guid,
-                            fileId: guid.isEmpty ? 0 : 11400000,
-                          ),
-                        );
+                        list[index] = row.copyWith(clip: ref);
                         _update(_model.copyWith(animations: list));
                       },
                     ),

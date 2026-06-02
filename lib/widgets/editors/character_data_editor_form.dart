@@ -11,10 +11,12 @@ import 'package:data_gen_ai/widgets/forms/config/eat_config_form.dart';
 import 'package:data_gen_ai/widgets/forms/config/navigate_config_form.dart';
 import 'package:data_gen_ai/widgets/forms/config/wait_config_form.dart';
 import 'package:data_gen_ai/widgets/forms/faction_id_dropdown.dart';
-import 'package:data_gen_ai/widgets/forms/int_field.dart';
+import 'package:data_gen_ai/core/enums/character_types.dart';
+import 'package:data_gen_ai/models/asset_picker_option.dart';
+import 'package:data_gen_ai/widgets/forms/searchable_int_dropdown.dart';
 import 'package:data_gen_ai/widgets/forms/interaction_slot_row_editor.dart';
 import 'package:data_gen_ai/widgets/forms/list_editor.dart';
-import 'package:data_gen_ai/widgets/forms/reference_list_editor.dart';
+import 'package:data_gen_ai/widgets/forms/asset_reference_list_editor.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -62,9 +64,17 @@ class CharacterDataEditorForm extends StatelessWidget {
                 value: data.faction,
                 onChanged: (v) => onChanged(data.copyWith(faction: v)),
               ),
-              IntField(
+              SearchableIntDropdown(
                 label: 'Character type',
-                initialValue: data.characterType,
+                value: data.characterType,
+                options: CharacterTypes.values
+                    .map(
+                      (e) => SearchableOption<int>(
+                        value: e.value,
+                        label: e.name,
+                      ),
+                    )
+                    .toList(),
                 onChanged: (v) => onChanged(data.copyWith(characterType: v)),
               ),
               BoolToggle(
@@ -79,14 +89,16 @@ class CharacterDataEditorForm extends StatelessWidget {
           title: 'AI references',
           child: Column(
             children: <Widget>[
-              ReferenceListEditor(
-                label: 'Beliefs',
+              AssetReferenceListEditor(
+                label: 'Belief selections',
+                typeKeys: const <String>['BeliefSelectionSO'],
                 references: data.beliefsObjects,
                 onChanged: (refs) =>
                     onChanged(data.copyWith(beliefsObjects: refs)),
               ),
-              ReferenceListEditor(
+              AssetReferenceListEditor(
                 label: 'Actionables',
+                typeKeys: const <String>['ActionableSO'],
                 references: data.actionables,
                 onChanged: (refs) => onChanged(data.copyWith(actionables: refs)),
               ),
