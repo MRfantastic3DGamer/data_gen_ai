@@ -1,3 +1,4 @@
+import 'package:data_gen_ai/blocs/ai_assistant/ai_assistant_bloc.dart';
 import 'package:data_gen_ai/blocs/character/character_bloc.dart';
 import 'package:data_gen_ai/blocs/game_data/game_data_bloc.dart';
 import 'package:data_gen_ai/blocs/generic_so/generic_so_bloc.dart';
@@ -7,12 +8,13 @@ import 'package:data_gen_ai/blocs/project/project_event.dart';
 import 'package:data_gen_ai/core/constants.dart';
 import 'package:data_gen_ai/core/routing/app_router.dart';
 import 'package:data_gen_ai/core/theme/app_theme.dart';
-import 'package:data_gen_ai/blocs/ai_assistant/ai_assistant_bloc.dart';
 import 'package:data_gen_ai/repositories/ai_repository.dart';
 import 'package:data_gen_ai/repositories/project_repository.dart';
-import 'package:data_gen_ai/services/gemma_service.dart';
+import 'package:data_gen_ai/repositories/registry_repository.dart';
 import 'package:data_gen_ai/services/file_service.dart';
+import 'package:data_gen_ai/services/gemma_service.dart';
 import 'package:data_gen_ai/services/json_converter.dart';
+import 'package:data_gen_ai/services/registry_catalog_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -27,6 +29,8 @@ class GameDataEditorApp extends StatelessWidget {
       fileService: fileService,
       jsonConverter: jsonConverter,
     );
+    final registryCatalog = RegistryCatalogService();
+    final registryRepository = RegistryRepository(projectRepository);
     final aiRepository = AIRepository(GemmaService());
 
     return MultiRepositoryProvider(
@@ -34,6 +38,8 @@ class GameDataEditorApp extends StatelessWidget {
         RepositoryProvider<FileService>.value(value: fileService),
         RepositoryProvider<JsonConverterService>.value(value: jsonConverter),
         RepositoryProvider<ProjectRepository>.value(value: projectRepository),
+        RepositoryProvider<RegistryCatalogService>.value(value: registryCatalog),
+        RepositoryProvider<RegistryRepository>.value(value: registryRepository),
         RepositoryProvider<AIRepository>.value(value: aiRepository),
       ],
       child: MultiBlocProvider(
@@ -43,7 +49,8 @@ class GameDataEditorApp extends StatelessWidget {
                 ProjectBloc(projectRepository)..add(const ProjectStarted()),
           ),
           BlocProvider<GameDataBloc>(
-            create: (_) => GameDataBloc(projectRepository),
+            create: (_) => GameDataBloc(projectRepository, registryCatalog)
+              ..add(const GameDataStarted()),
           ),
           BlocProvider<CharacterBloc>(
             create: (_) => CharacterBloc(projectRepository, jsonConverter),

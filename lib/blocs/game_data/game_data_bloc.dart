@@ -2,10 +2,11 @@ import 'package:data_gen_ai/blocs/game_data/game_data_event.dart';
 import 'package:data_gen_ai/blocs/game_data/game_data_state.dart';
 import 'package:data_gen_ai/models/game_data_file_entry.dart';
 import 'package:data_gen_ai/repositories/project_repository.dart';
+import 'package:data_gen_ai/services/registry_catalog_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class GameDataBloc extends Bloc<GameDataEvent, GameDataState> {
-  GameDataBloc(this._repository) : super(const GameDataState()) {
+  GameDataBloc(this._repository, this._registryCatalog) : super(const GameDataState()) {
     on<GameDataStarted>(_onStarted);
     on<GameDataSearchChanged>(_onSearchChanged);
     on<GameDataCategoryFilterChanged>(_onCategoryChanged);
@@ -17,6 +18,7 @@ class GameDataBloc extends Bloc<GameDataEvent, GameDataState> {
   }
 
   final ProjectRepository _repository;
+  final RegistryCatalogService _registryCatalog;
 
   Future<void> _onStarted(
     GameDataEvent event,
@@ -24,6 +26,7 @@ class GameDataBloc extends Bloc<GameDataEvent, GameDataState> {
   ) async {
     emit(state.copyWith(loading: true, clearError: true, clearSavedMessage: true));
     try {
+      await _registryCatalog.reload(_repository);
       final entries = await _repository.loadAllEntries();
       emit(state.copyWith(loading: false, entries: entries));
     } catch (e) {
@@ -79,6 +82,7 @@ class GameDataBloc extends Bloc<GameDataEvent, GameDataState> {
     emit(state.copyWith(committing: true, clearError: true));
     try {
       final count = await _repository.commitAll(dirty);
+      await _registryCatalog.reload(_repository);
       final refreshed = await _repository.loadAllEntries();
       emit(
         state.copyWith(
@@ -98,15 +102,18 @@ class GameDataBloc extends Bloc<GameDataEvent, GameDataState> {
     Emitter<GameDataState> emit,
   ) async {
     try {
+      await _registryCatalog.reload(_repository);
       final path = await _repository.createNewFile(
         typeInfo: event.typeInfo,
         objectName: event.name,
         payload: _defaultPayloadFor(event.typeInfo.key),
       );
       final entry = await _repository.loadEntry(path);
+      await _registryCatalog.reload(_repository);
+      final entries = await _repository.loadAllEntries();
       emit(
         state.copyWith(
-          entries: <GameDataFileEntry>[...state.entries, entry],
+          entries: entries,
           savedMessage: 'Created ${event.name}',
         ),
       );

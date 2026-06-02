@@ -20,6 +20,13 @@ class HomeScreen extends StatelessWidget {
           ),
           _tile(
             context,
+            'Registries',
+            'Factions & animation type tables (Unity dropdowns)',
+            Icons.table_chart_outlined,
+            '/registries',
+          ),
+          _tile(
+            context,
             'JSON data folder',
             'Point at the RAW folder copied from Unity',
             Icons.folder_open_outlined,

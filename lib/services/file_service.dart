@@ -3,17 +3,24 @@ import 'dart:io';
 
 import 'package:data_gen_ai/core/constants.dart';
 import 'package:data_gen_ai/services/data_folder_service.dart';
+import 'package:data_gen_ai/services/storage_permission_service.dart';
 import 'package:path_provider/path_provider.dart';
 
 class FileService {
-  FileService({DataFolderService? dataFolderService})
-    : _dataFolderService = dataFolderService ?? DataFolderService();
+  FileService({
+    DataFolderService? dataFolderService,
+    StoragePermissionService? storagePermissionService,
+  }) : _dataFolderService = dataFolderService ?? DataFolderService(),
+       _storagePermissionService =
+           storagePermissionService ?? StoragePermissionService();
 
   final DataFolderService _dataFolderService;
+  final StoragePermissionService _storagePermissionService;
 
   Future<Directory> getRawRootDirectory() async {
     final custom = await _dataFolderService.getCustomRootPath();
     if (custom != null && custom.isNotEmpty) {
+      await _ensureCanAccessExternalPath(custom);
       final directory = Directory(custom);
       if (!await directory.exists()) {
         await directory.create(recursive: true);
@@ -27,6 +34,23 @@ class FileService {
       await directory.create(recursive: true);
     }
     return directory;
+  }
+
+  Future<void> _ensureCanAccessExternalPath(String path) async {
+    if (!Platform.isAndroid) return;
+
+    final docs = await getApplicationDocumentsDirectory();
+    if (path.startsWith(docs.path)) return;
+
+    if (!await _storagePermissionService.hasStorageAccess()) {
+      final result = await _storagePermissionService.requestStorageAccess();
+      if (!result.granted) {
+        throw StoragePermissionException(
+          result.message ??
+              'Storage permission required to access $path',
+        );
+      }
+    }
   }
 
   Future<List<File>> listJsonFiles() async {
@@ -43,10 +67,16 @@ class FileService {
   }
 
   Future<String> readFile(String path) async {
+    if (Platform.isAndroid) {
+      await _ensureCanAccessExternalPath(File(path).parent.path);
+    }
     return File(path).readAsString();
   }
 
   Future<void> writeFile(String path, String content) async {
+    if (Platform.isAndroid) {
+      await _ensureCanAccessExternalPath(File(path).parent.path);
+    }
     final file = File(path);
     await file.parent.create(recursive: true);
     await file.writeAsString(content, flush: true);

@@ -9,7 +9,8 @@ Mobile companion for editing Unity **GameData** ScriptableObjects as JSON files.
 
 2. **Transfer** — Copy the entire `RAW` folder to your phone (USB, cloud, etc.).
 
-3. **Flutter app** — Open **JSON data folder** and select that `RAW` directory.  
+3. **Flutter app** — Grant **storage / all files access** when prompted, then open **JSON data folder** and select that `RAW` directory.  
+   Use **Registries** to edit the factions and animation-type tables (same ids as Unity dropdowns).  
    Use **Actions & Beliefs** to search, filter, and edit entries. Tap **Commit** to write changes back to JSON files.
 
 4. **Transfer back** — Copy the edited `RAW` folder into the Unity project at `Assets/GameData/RAW/`.
