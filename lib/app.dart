@@ -1,6 +1,7 @@
 import 'package:data_gen_ai/blocs/ai_assistant/ai_assistant_bloc.dart';
 import 'package:data_gen_ai/blocs/character/character_bloc.dart';
 import 'package:data_gen_ai/blocs/game_data/game_data_bloc.dart';
+import 'package:data_gen_ai/blocs/game_data/game_data_event.dart';
 import 'package:data_gen_ai/blocs/generic_so/generic_so_bloc.dart';
 import 'package:data_gen_ai/blocs/item/item_bloc.dart';
 import 'package:data_gen_ai/blocs/project/project_bloc.dart';
@@ -45,12 +46,18 @@ class GameDataEditorApp extends StatelessWidget {
       child: MultiBlocProvider(
         providers: <BlocProvider<dynamic>>[
           BlocProvider<ProjectBloc>(
-            create: (_) =>
-                ProjectBloc(projectRepository)..add(const ProjectStarted()),
+            create: (_) {
+              final bloc = ProjectBloc(projectRepository);
+              bloc.add(const ProjectStarted());
+              return bloc;
+            },
           ),
           BlocProvider<GameDataBloc>(
-            create: (_) => GameDataBloc(projectRepository, registryCatalog)
-              ..add(const GameDataStarted()),
+            create: (_) {
+              final bloc = GameDataBloc(projectRepository, registryCatalog);
+              bloc.add(const GameDataStarted());
+              return bloc;
+            },
           ),
           BlocProvider<CharacterBloc>(
             create: (_) => CharacterBloc(projectRepository, jsonConverter),
