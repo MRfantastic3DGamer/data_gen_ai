@@ -25,6 +25,7 @@ import 'package:data_gen_ai/widgets/forms/searchable_enum_dropdown.dart';
 import 'package:data_gen_ai/widgets/forms/faction_id_dropdown.dart';
 import 'package:data_gen_ai/widgets/forms/flags_enum_checkbox_group.dart';
 import 'package:data_gen_ai/widgets/forms/float_field.dart';
+import 'package:data_gen_ai/widgets/forms/int_field.dart';
 import 'package:data_gen_ai/widgets/forms/item_type_id_picker.dart';
 import 'package:data_gen_ai/widgets/forms/item_category_definition_editor.dart';
 import 'package:data_gen_ai/widgets/forms/asset_reference_field.dart';
