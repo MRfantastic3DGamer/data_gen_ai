@@ -68,6 +68,8 @@ class GameDataEditorApp extends StatelessWidget {
         child: MaterialApp.router(
           title: AppConstants.appName,
           theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: ThemeMode.system,
           routerConfig: AppRouter.router,
         ),
       ),

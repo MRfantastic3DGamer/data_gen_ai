@@ -1,8 +1,11 @@
 import 'package:data_gen_ai/blocs/game_data/game_data_bloc.dart';
 import 'package:data_gen_ai/blocs/game_data/game_data_event.dart';
+import 'package:data_gen_ai/core/theme/app_spacing.dart';
 import 'package:data_gen_ai/services/data_folder_service.dart';
 import 'package:data_gen_ai/services/file_service.dart';
 import 'package:data_gen_ai/services/storage_permission_service.dart';
+import 'package:data_gen_ai/widgets/common/app_snackbar.dart';
+import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -48,13 +51,9 @@ class _DataFolderScreenState extends State<DataFolderScreen> {
       _needsSettings = result.needsAllFilesSettings;
     });
     if (result.granted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Storage access granted.')),
-      );
+      AppSnackBar.showSuccess(context, 'Storage access granted.');
     } else if (result.message != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.message!)),
-      );
+      AppSnackBar.showError(context, result.message!);
     }
   }
 
@@ -69,14 +68,13 @@ class _DataFolderScreenState extends State<DataFolderScreen> {
       if (!mounted) return;
       setState(() => _currentPath = result);
       context.read<GameDataBloc>().add(const GameDataReloadRequested());
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Data folder updated. Reloaded JSON files.')),
+      AppSnackBar.showSuccess(
+        context,
+        'Data folder updated. Reloaded JSON files.',
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not use folder: $e')),
-      );
+      AppSnackBar.showError(context, 'Could not use folder: $e');
     }
   }
 
@@ -105,32 +103,56 @@ class _DataFolderScreenState extends State<DataFolderScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-              padding: const EdgeInsets.all(16),
+              padding: AppSpacing.pagePadding(context),
               children: <Widget>[
                 if (!_hasStorageAccess)
                   Card(
                     color: Theme.of(context).colorScheme.errorContainer,
                     child: Padding(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(AppSpacing.md),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: <Widget>[
+                          Row(
+                            children: <Widget>[
+                              Icon(
+                                Icons.lock_outline_rounded,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onErrorContainer,
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              Expanded(
+                                child: Text(
+                                  'Storage permission required',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onErrorContainer,
+                                      ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
                           Text(
-                            'Storage permission required',
-                            style: Theme.of(context).textTheme.titleMedium,
+                            'Allow full file access so the app can create and edit JSON in your RAW folder.',
+                            style: TextStyle(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onErrorContainer,
+                            ),
                           ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'To create and edit JSON files in your copied RAW folder, '
-                            'allow full file access (All files access on Android 11+).',
-                          ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: AppSpacing.md),
                           FilledButton(
                             onPressed: _requestPermissions,
                             child: const Text('Grant storage access'),
                           ),
                           if (_needsSettings) ...<Widget>[
-                            const SizedBox(height: 8),
+                            const SizedBox(height: AppSpacing.sm),
                             OutlinedButton(
                               onPressed: () =>
                                   _permissions.openAppPermissionSettings(),
@@ -141,35 +163,50 @@ class _DataFolderScreenState extends State<DataFolderScreen> {
                       ),
                     ),
                   ),
-                Text(
-                  'Workflow',
-                  style: Theme.of(context).textTheme.titleMedium,
+                SectionCard(
+                  title: 'Workflow',
+                  child: Text(
+                    '1. Unity → Export GameData to JSON\n'
+                    '2. Copy RAW folder to your phone\n'
+                    '3. Grant storage access, then choose folder\n'
+                    '4. Edit and Commit\n'
+                    '5. Copy back → Unity Import',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      height: 1.5,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  '1. In Unity: Tools → Agent Actions → Export GameData ScriptableObjects to JSON\n'
-                  '2. Copy the Assets/GameData/RAW folder to your phone\n'
-                  '3. Grant storage access above, then select that folder\n'
-                  '4. Edit in this app and tap Commit\n'
-                  '5. Copy RAW back to Unity and run Import JSON to GameData',
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Current folder',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const SizedBox(height: 4),
-                SelectableText(_currentPath ?? ''),
-                const SizedBox(height: 16),
-                FilledButton.icon(
-                  onPressed: _pickFolder,
-                  icon: const Icon(Icons.folder_open),
-                  label: const Text('Choose folder'),
-                ),
-                const SizedBox(height: 8),
-                OutlinedButton(
-                  onPressed: _useDefault,
-                  child: const Text('Use app documents default'),
+                const SizedBox(height: AppSpacing.md),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Text(
+                          'Current folder',
+                          style: Theme.of(context).textTheme.labelLarge,
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        SelectableText(
+                          _currentPath ?? '',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        FilledButton.icon(
+                          onPressed: _pickFolder,
+                          icon: const Icon(Icons.folder_open_rounded),
+                          label: const Text('Choose folder'),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        OutlinedButton(
+                          onPressed: _useDefault,
+                          child: const Text('Use app documents default'),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),

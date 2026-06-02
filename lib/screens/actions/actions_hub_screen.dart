@@ -2,8 +2,11 @@ import 'package:data_gen_ai/blocs/game_data/game_data_bloc.dart';
 import 'package:data_gen_ai/blocs/game_data/game_data_event.dart';
 import 'package:data_gen_ai/blocs/game_data/game_data_state.dart';
 import 'package:data_gen_ai/core/so_type_registry.dart';
+import 'package:data_gen_ai/core/theme/app_spacing.dart';
 import 'package:data_gen_ai/models/game_data_file_entry.dart';
+import 'package:data_gen_ai/widgets/common/app_snackbar.dart';
 import 'package:data_gen_ai/widgets/common/empty_state.dart';
+import 'package:data_gen_ai/widgets/common/game_data_list_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -16,7 +19,7 @@ class ActionsHubScreen extends StatefulWidget {
 }
 
 class _ActionsHubScreenState extends State<ActionsHubScreen> {
-  final _searchController = TextEditingController();
+  final _searchController = SearchController();
 
   @override
   void initState() {
@@ -38,14 +41,14 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
         actions: <Widget>[
           IconButton(
             tooltip: 'Reload JSON',
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh_rounded),
             onPressed: () {
               context.read<GameDataBloc>().add(const GameDataReloadRequested());
             },
           ),
           IconButton(
             tooltip: 'Data folder',
-            icon: const Icon(Icons.folder_open),
+            icon: const Icon(Icons.folder_open_rounded),
             onPressed: () => context.push('/data-folder'),
           ),
         ],
@@ -53,17 +56,10 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
       body: BlocConsumer<GameDataBloc, GameDataState>(
         listener: (context, state) {
           if (state.savedMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.savedMessage!)),
-            );
+            AppSnackBar.showSuccess(context, state.savedMessage!);
           }
           if (state.error != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.error!),
-                backgroundColor: Theme.of(context).colorScheme.error,
-              ),
-            );
+            AppSnackBar.showError(context, state.error!);
           }
         },
         builder: (context, state) {
@@ -72,37 +68,49 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
           }
 
           return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                child: TextField(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                  AppSpacing.md,
+                  0,
+                ),
+                child: SearchBar(
                   controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search name, path, or type…',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: state.searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
+                  hintText: 'Search name, path, or type…',
+                  leading: const Icon(Icons.search_rounded),
+                  trailing: state.searchQuery.isNotEmpty
+                      ? <Widget>[
+                          IconButton(
+                            icon: const Icon(Icons.clear_rounded),
                             onPressed: () {
                               _searchController.clear();
                               context.read<GameDataBloc>().add(
                                 const GameDataSearchChanged(''),
                               );
                             },
-                          )
-                        : null,
-                    border: const OutlineInputBorder(),
-                  ),
+                          ),
+                        ]
+                      : null,
                   onChanged: (q) => context.read<GameDataBloc>().add(
                     GameDataSearchChanged(q),
+                  ),
+                  elevation: WidgetStateProperty.all(0),
+                  backgroundColor: WidgetStateProperty.all(
+                    Theme.of(context).colorScheme.surfaceContainerHighest,
                   ),
                 ),
               ),
               SizedBox(
-                height: 48,
+                height: 52,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
                   children: <Widget>[
                     _filterChip(
                       context,
@@ -125,26 +133,52 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
                 ),
               ),
               if (state.dirtyCount > 0)
-                MaterialBanner(
-                  content: Text(
-                    '${state.dirtyCount} unsaved change(s). Tap Commit to write JSON files.',
-                  ),
-                  actions: <Widget>[
-                    TextButton(
-                      onPressed: state.committing
-                          ? null
-                          : () => context.read<GameDataBloc>().add(
-                              const GameDataCommitRequested(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                  child: Card(
+                    color: Theme.of(context).colorScheme.tertiaryContainer,
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      child: Row(
+                        children: <Widget>[
+                          Icon(
+                            Icons.cloud_upload_outlined,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onTertiaryContainer,
+                          ),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(
+                            child: Text(
+                              '${state.dirtyCount} unsaved change(s)',
+                              style: TextStyle(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onTertiaryContainer,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                      child: state.committing
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Commit'),
+                          ),
+                          FilledButton.tonal(
+                            onPressed: state.committing
+                                ? null
+                                : () => context.read<GameDataBloc>().add(
+                                    const GameDataCommitRequested(),
+                                  ),
+                            child: state.committing
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text('Commit'),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
+                  ),
                 ),
               Expanded(child: _buildList(context, state)),
             ],
@@ -167,7 +201,7 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
                       : () => context.read<GameDataBloc>().add(
                           const GameDataCommitRequested(),
                         ),
-                  icon: const Icon(Icons.save),
+                  icon: const Icon(Icons.save_rounded),
                   label: Text('Commit (${state.dirtyCount})'),
                 ),
               );
@@ -176,7 +210,7 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
           FloatingActionButton(
             heroTag: 'add',
             onPressed: () => _showCreateSheet(context),
-            child: const Icon(Icons.add),
+            child: const Icon(Icons.add_rounded),
           ),
         ],
       ),
@@ -190,10 +224,11 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
     required VoidCallback onTap,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      padding: const EdgeInsets.only(right: AppSpacing.sm),
       child: FilterChip(
         label: Text(label),
         selected: selected,
+        showCheckmark: true,
         onSelected: (_) => onTap(),
       ),
     );
@@ -202,29 +237,29 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
   Widget _buildList(BuildContext context, GameDataState state) {
     final entries = state.filteredEntries;
     if (entries.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         message:
-            'No JSON files found.\n\nExport from Unity (Tools → Agent Actions → Export GameData…), copy Assets/GameData/RAW to your phone, then set the data folder.',
+            'No JSON files found.\n\nExport from Unity, copy RAW to your phone, then set the data folder.',
+        icon: Icons.folder_off_outlined,
+        actionLabel: 'Open data folder',
+        onAction: () => context.push('/data-folder'),
       );
     }
 
     return ListView.builder(
+      padding: const EdgeInsets.only(bottom: 88),
       itemCount: entries.length,
-      itemBuilder: (context, index) => _entryTile(context, entries[index]),
+      itemBuilder: (context, index) =>
+          _entryTile(context, entries[index]),
     );
   }
 
   Widget _entryTile(BuildContext context, GameDataFileEntry entry) {
-    return ListTile(
-      leading: Icon(
-        entry.isDirty ? Icons.edit_note : Icons.description_outlined,
-        color: entry.isDirty ? Theme.of(context).colorScheme.primary : null,
-      ),
-      title: Text(entry.displayName),
-      subtitle: Text('${entry.typeLabel} · ${entry.path.split('/').last}'),
-      trailing: entry.isDirty
-          ? const Icon(Icons.circle, size: 10, color: Colors.orange)
-          : null,
+    return GameDataListTile(
+      title: entry.displayName,
+      subtitle: entry.path.split('/').last,
+      typeLabel: entry.typeLabel,
+      isDirty: entry.isDirty,
       onTap: () => context.push('/so-edit', extra: entry.path),
     );
   }
@@ -239,13 +274,14 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (sheetContext) {
         return Padding(
           padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
+            left: AppSpacing.md,
+            right: AppSpacing.md,
+            top: AppSpacing.md,
+            bottom: MediaQuery.viewInsetsOf(sheetContext).bottom + AppSpacing.md,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -253,9 +289,11 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
             children: <Widget>[
               Text(
                 'New Scriptable Object',
-                style: Theme.of(sheetContext).textTheme.titleLarge,
+                style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               DropdownButtonFormField<SOTypeInfo>(
                 value: selected,
                 decoration: const InputDecoration(labelText: 'Type'),
@@ -269,13 +307,15 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
                     .toList(),
                 onChanged: (v) => selected = v,
               ),
+              const SizedBox(height: AppSpacing.sm),
               TextField(
                 controller: nameController,
                 decoration: const InputDecoration(
                   labelText: 'Asset name (file name)',
                 ),
+                textCapitalization: TextCapitalization.none,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               FilledButton(
                 onPressed: () {
                   final name = nameController.text.trim();
