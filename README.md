@@ -1,22 +1,33 @@
 # GameData Editor (Flutter)
 
-Mobile companion for editing Unity **GameData** ScriptableObjects as JSON files.
+Mobile companion for editing Unity **GameData** ScriptableObjects as JSON, synced via **Firebase Realtime Database** or a local RAW folder.
 
-## Workflow
+## Firebase setup (local)
 
-1. **Unity export** — `Tools → Agent Actions → Export GameData ScriptableObjects to JSON`  
-   Writes mirrored JSON under `Assets/GameData/RAW/` in the Unity project.
+`lib/firebase_options.dart` and `android/app/google-services.json` are **gitignored**. After clone:
 
-2. **Transfer** — Copy the entire `RAW` folder to your phone (USB, cloud, etc.).
+```bash
+flutterfire configure --project=game-dev-data-sync
+```
 
-3. **Flutter app** — Grant **storage / all files access** when prompted, then open **JSON data folder** and select that `RAW` directory.  
-   Use **Registries** to edit the factions and animation-type tables (same ids as Unity dropdowns).  
-   Use **Actions & Beliefs** to search, filter, and edit entries. Tap **Commit** to write changes back to JSON files.
+Or copy from `lib/firebase_options.dart.example` and `android/app/google-services.json.example`.
 
-4. **Transfer back** — Copy the edited `RAW` folder into the Unity project at `Assets/GameData/RAW/`.
+**CI builds** need [GitHub Secrets](docs/GITHUB_SECRETS.md) (`FIREBASE_OPTIONS_DART_B64`, `GOOGLE_SERVICES_JSON_B64`).
 
-5. **Unity import** — `Tools → Agent Actions → Import JSON to GameData ScriptableObjects`  
-   Applies JSON onto existing `.asset` files (or creates missing assets).
+## Workflow (Firebase — recommended)
+
+1. **Unity** — `Tools → Agent Actions → GameData Firebase → Push RAW to Firebase` (or pull first if the DB is the source of truth).
+2. **Flutter** — Open **Data source**, select **Firebase Realtime Database**. Edits **Commit** directly to the cloud.
+3. **Unity** — `Tools → Agent Actions → GameData Firebase → Pull Firebase to RAW`, then import JSON onto ScriptableObjects.
+
+See [docs/FIREBASE_SYNC.md](docs/FIREBASE_SYNC.md) for RTDB layout and security rules.
+
+## Workflow (local files)
+
+1. **Unity export** — `Tools → Agent Actions → Export GameData ScriptableObjects to JSON` → `Assets/GameData/RAW/`.
+2. Copy `RAW` to the device (optional if using Firebase).
+3. **Flutter** — **Data source** → **Local JSON folder**, grant storage access, choose the `RAW` directory.
+4. Edit and **Commit**; copy `RAW` back to Unity; **Import JSON to GameData ScriptableObjects**.
 
 ## AI features
 

@@ -1,0 +1,12 @@
+{
+  "rules": {
+    "gameData": {
+      "v1": {
+        "files": {
+          ".read": true,
+          ".write": true
+        }
+      }
+    }
+  }
+}

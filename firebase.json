@@ -1,0 +1,25 @@
+{
+  "database": {
+    "rules": "database.rules.json"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "game-dev-data-sync",
+          "appId": "1:855075901117:android:bf8da79350ec3d9fcc71d4",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "game-dev-data-sync",
+          "configurations": {
+            "android": "1:855075901117:android:bf8da79350ec3d9fcc71d4",
+            "web": "1:855075901117:web:50d35ff5a6471ab0cc71d4"
+          }
+        }
+      }
+    }
+  }
+}

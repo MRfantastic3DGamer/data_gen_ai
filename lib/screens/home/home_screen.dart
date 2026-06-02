@@ -64,7 +64,7 @@ class HomeScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Edit Unity GameData JSON on the go',
+                              'Edit Unity GameData via Firebase or local JSON',
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyMedium
@@ -102,9 +102,9 @@ class HomeScreen extends StatelessWidget {
                   onTap: () => context.push('/registries'),
                 ),
                 NavCard(
-                  title: 'JSON data folder',
-                  subtitle: 'Select the RAW folder from Unity export',
-                  icon: Icons.folder_open_rounded,
+                  title: 'Data source',
+                  subtitle: 'Firebase Realtime DB or local RAW folder',
+                  icon: Icons.cloud_sync_outlined,
                   iconColor: colorScheme.tertiary,
                   delayMs: 80,
                   onTap: () => context.push('/data-folder'),

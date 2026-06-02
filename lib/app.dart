@@ -14,6 +14,7 @@ import 'package:data_gen_ai/repositories/project_repository.dart';
 import 'package:data_gen_ai/repositories/registry_repository.dart';
 import 'package:data_gen_ai/services/asset_index_service.dart';
 import 'package:data_gen_ai/services/file_service.dart';
+import 'package:data_gen_ai/services/game_data_backend_service.dart';
 import 'package:data_gen_ai/services/gemma_service.dart';
 import 'package:data_gen_ai/services/json_converter.dart';
 import 'package:data_gen_ai/services/registry_catalog_service.dart';
@@ -21,15 +22,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class GameDataEditorApp extends StatelessWidget {
-  const GameDataEditorApp({super.key});
+  const GameDataEditorApp({super.key, required this.backendService});
+
+  final GameDataBackendService backendService;
 
   @override
   Widget build(BuildContext context) {
     final fileService = FileService();
     final jsonConverter = JsonConverterService();
     final projectRepository = ProjectRepository(
-      fileService: fileService,
+      backendService: backendService,
       jsonConverter: jsonConverter,
+      fileService: fileService,
     );
     final registryCatalog = RegistryCatalogService();
     final registryRepository = RegistryRepository(projectRepository);
@@ -37,6 +41,9 @@ class GameDataEditorApp extends StatelessWidget {
 
     return MultiRepositoryProvider(
       providers: <RepositoryProvider<dynamic>>[
+        RepositoryProvider<GameDataBackendService>.value(
+          value: backendService,
+        ),
         RepositoryProvider<FileService>.value(value: fileService),
         RepositoryProvider<AssetIndexService>(
           create: (c) => AssetIndexService(c.read<FileService>()),

@@ -1,36 +1,47 @@
 import 'dart:convert';
 
+import 'package:data_gen_ai/core/enums/game_data_backend.dart';
+import 'package:data_gen_ai/core/game_data_path.dart';
 import 'package:data_gen_ai/core/so_type_registry.dart';
 import 'package:data_gen_ai/models/game_data_file_entry.dart';
 import 'package:data_gen_ai/models/serialization_data.dart';
 import 'package:data_gen_ai/models/unity_envelope.dart';
 import 'package:data_gen_ai/services/file_service.dart';
+import 'package:data_gen_ai/services/game_data_backend_service.dart';
+import 'package:data_gen_ai/services/game_data_storage.dart';
 import 'package:data_gen_ai/services/json_converter.dart';
 
 class ProjectRepository {
   ProjectRepository({
-    required FileService fileService,
+    required GameDataBackendService backendService,
     required JsonConverterService jsonConverter,
-  }) : _fileService = fileService,
-       _jsonConverter = jsonConverter;
+    FileService? fileService,
+  }) : _backendService = backendService,
+       _jsonConverter = jsonConverter,
+       _fileService = fileService ?? FileService();
 
-  final FileService _fileService;
+  final GameDataBackendService _backendService;
   final JsonConverterService _jsonConverter;
+  final FileService _fileService;
 
-  Future<List<String>> listJsonPaths() async {
-    final files = await _fileService.listJsonFiles();
-    return files.map((f) => f.path).toList()..sort();
-  }
+  GameDataStorage get _storage => _backendService.activeStorage;
 
-  Future<GameDataFileEntry> loadEntry(String path) async {
-    final envelope = await loadEnvelope(path);
+  Future<String> dataLocationLabel() => _storage.displayLocation();
+
+  Future<List<String>> listJsonKeys() => _storage.listJsonKeys();
+
+  /// Backward-compatible alias used by blocs.
+  Future<List<String>> listJsonPaths() => listJsonKeys();
+
+  Future<GameDataFileEntry> loadEntry(String key) async {
+    final envelope = await loadEnvelope(key);
     final payload = _jsonConverter.extractPayload(envelope);
     final typeInfo = SOTypeRegistry.fromClassIdentifier(
       envelope.editorClassIdentifier,
-    ) ?? SOTypeRegistry.fromPath(path);
+    ) ?? SOTypeRegistry.fromPath(key);
     return GameDataFileEntry(
-      path: path,
-      fileName: path.split('/').last,
+      path: GameDataPath.normalizeKey(key),
+      fileName: GameDataPath.fileNameFromKey(key),
       typeInfo: typeInfo,
       envelope: envelope,
       payload: payload,
@@ -38,11 +49,11 @@ class ProjectRepository {
   }
 
   Future<List<GameDataFileEntry>> loadAllEntries() async {
-    final paths = await listJsonPaths();
+    final keys = await listJsonKeys();
     final entries = <GameDataFileEntry>[];
-    for (final path in paths) {
+    for (final key in keys) {
       try {
-        entries.add(await loadEntry(path));
+        entries.add(await loadEntry(key));
       } catch (_) {
         // Skip corrupt files during bulk load.
       }
@@ -50,18 +61,18 @@ class ProjectRepository {
     return entries;
   }
 
-  Future<UnityEnvelope> loadEnvelope(String path) async {
-    final content = await _fileService.readFile(path);
+  Future<UnityEnvelope> loadEnvelope(String key) async {
+    final content = await _storage.readContent(key);
     return _jsonConverter.parseEnvelope(content);
   }
 
-  Future<Map<String, dynamic>> loadPayload(String path) async {
-    final envelope = await loadEnvelope(path);
+  Future<Map<String, dynamic>> loadPayload(String key) async {
+    final envelope = await loadEnvelope(key);
     return _jsonConverter.extractPayload(envelope);
   }
 
-  Future<void> saveEnvelope(String path, UnityEnvelope envelope) async {
-    await _fileService.writeFile(path, _jsonConverter.encodeEnvelope(envelope));
+  Future<void> saveEnvelope(String key, UnityEnvelope envelope) async {
+    await _storage.writeContent(key, _jsonConverter.encodeEnvelope(envelope));
   }
 
   Future<void> saveEntry(GameDataFileEntry entry) async {
@@ -79,13 +90,14 @@ class ProjectRepository {
     required Map<String, dynamic> payload,
     String? name,
   }) async {
+    final key = GameDataPath.normalizeKey(path);
     final merged = _jsonConverter.mergePayload(
       original: baseEnvelope,
       payload: payload,
     );
     if (name != null && name.isNotEmpty) {
       await saveEnvelope(
-        path,
+        key,
         UnityEnvelope(
           name: name,
           editorClassIdentifier: merged.editorClassIdentifier,
@@ -96,13 +108,13 @@ class ProjectRepository {
         ),
       );
     } else {
-      await saveEnvelope(path, merged);
+      await saveEnvelope(key, merged);
     }
   }
 
-  Future<void> saveRawJson(String path, Map<String, dynamic> json) async {
-    await _fileService.writeFile(
-      path,
+  Future<void> saveRawJson(String key, Map<String, dynamic> json) async {
+    await _storage.writeContent(
+      GameDataPath.normalizeKey(key),
       const JsonEncoder.withIndent('  ').convert(json),
     );
   }
@@ -114,8 +126,7 @@ class ProjectRepository {
     return null;
   }
 
-  /// Creates a brand-new JSON file wrapped in a Unity envelope.
-  /// Returns the absolute file path that was written.
+  /// Creates a new JSON entry. Returns the logical key (e.g. `beliefs/foo.json`).
   Future<String> createNewFile({
     SOTypeInfo? typeInfo,
     String? typeName,
@@ -131,14 +142,16 @@ class ProjectRepository {
           subfolder: '',
           category: 'Other',
         );
-    final root = await _fileService.getRawRootDirectory();
-    final dir = resolved.subfolder.isEmpty
-        ? root.path
-        : '${root.path}/${resolved.subfolder}';
-    final path = '$dir/$objectName.json';
+
+    final fileName = objectName.endsWith('.json')
+        ? objectName
+        : '$objectName.json';
+    final key = resolved.subfolder.isEmpty
+        ? fileName
+        : '${resolved.subfolder}/$fileName';
 
     final envelope = UnityEnvelope(
-      name: objectName,
+      name: objectName.replaceAll('.json', ''),
       editorClassIdentifier: resolved.classIdentifier,
       serializationData: resolved.key == 'BeliefSO'
           ? null
@@ -146,8 +159,8 @@ class ProjectRepository {
       payload: payload,
     );
 
-    await saveEnvelope(path, envelope);
-    return path;
+    await saveEnvelope(key, envelope);
+    return GameDataPath.normalizeKey(key);
   }
 
   Future<int> commitAll(List<GameDataFileEntry> dirtyEntries) async {
@@ -157,5 +170,14 @@ class ProjectRepository {
       count++;
     }
     return count;
+  }
+
+  /// For local backend: absolute RAW root (meta file indexing).
+  Future<String?> localRawRootPath() async {
+    if (_backendService.backend != GameDataBackend.localFiles) {
+      return null;
+    }
+    final root = await _fileService.getRawRootDirectory();
+    return root.path;
   }
 }
