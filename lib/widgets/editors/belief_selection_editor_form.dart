@@ -173,10 +173,14 @@ class _BeliefSelectionEditorFormState extends State<BeliefSelectionEditorForm> {
                           );
                         },
                       ),
-                    DataSourceToggle(
-                      label: 'Function source',
-                      value: item.functionSource,
-                      onChanged: (v) {
+                    Text(
+                      'Consideration function (inline)',
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    ConsiderationFunctionConfigEditor(
+                      config: item.functionInline,
+                      onChanged: (cfg) {
                         final list = List<ConsiderationItemModel>.from(
                           _model.considerables,
                         );
@@ -184,9 +188,12 @@ class _BeliefSelectionEditorFormState extends State<BeliefSelectionEditorForm> {
                           considerableSource: item.considerableSource,
                           considerableAsset: item.considerableAsset,
                           considerableInline: item.considerableInline,
-                          functionSource: v,
-                          functionAsset: item.functionAsset,
-                          functionInline: item.functionInline,
+                          functionSource: 1,
+                          functionAsset: const UnityReference(
+                            guid: '',
+                            fileId: 0,
+                          ),
+                          functionInline: cfg,
                         );
                         _update(
                           BeliefSelectionSOModel(
@@ -196,54 +203,6 @@ class _BeliefSelectionEditorFormState extends State<BeliefSelectionEditorForm> {
                         );
                       },
                     ),
-                    if (item.functionSource == 0)
-                      AssetReferenceField(
-                        label: 'Function asset',
-                        reference: item.functionAsset,
-                        typeKeys: const <String>['ConsiderationFunctionSO'],
-                        onChanged: (ref) {
-                          final list = List<ConsiderationItemModel>.from(
-                            _model.considerables,
-                          );
-                          list[index] = ConsiderationItemModel(
-                            considerableSource: item.considerableSource,
-                            considerableAsset: item.considerableAsset,
-                            considerableInline: item.considerableInline,
-                            functionSource: item.functionSource,
-                            functionAsset: ref,
-                            functionInline: item.functionInline,
-                          );
-                          _update(
-                            BeliefSelectionSOModel(
-                              belief: _model.belief,
-                              considerables: list,
-                            ),
-                          );
-                        },
-                      )
-                    else
-                      ConsiderationFunctionConfigEditor(
-                        config: item.functionInline,
-                        onChanged: (cfg) {
-                          final list = List<ConsiderationItemModel>.from(
-                            _model.considerables,
-                          );
-                          list[index] = ConsiderationItemModel(
-                            considerableSource: item.considerableSource,
-                            considerableAsset: item.considerableAsset,
-                            considerableInline: item.considerableInline,
-                            functionSource: item.functionSource,
-                            functionAsset: item.functionAsset,
-                            functionInline: cfg,
-                          );
-                          _update(
-                            BeliefSelectionSOModel(
-                              belief: _model.belief,
-                              considerables: list,
-                            ),
-                          );
-                        },
-                      ),
                   ],
                 ),
               ),

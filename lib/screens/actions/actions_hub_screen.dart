@@ -2,6 +2,7 @@ import 'package:data_gen_ai/blocs/game_data/game_data_bloc.dart';
 import 'package:data_gen_ai/blocs/game_data/game_data_event.dart';
 import 'package:data_gen_ai/blocs/game_data/game_data_state.dart';
 import 'package:data_gen_ai/core/so_type_registry.dart';
+import 'package:data_gen_ai/models/so_edit_route_args.dart';
 import 'package:data_gen_ai/core/theme/app_spacing.dart';
 import 'package:data_gen_ai/models/game_data_file_entry.dart';
 import 'package:data_gen_ai/widgets/common/app_snackbar.dart';
@@ -271,9 +272,16 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
 
   Future<void> _showCreateSheet(BuildContext context) async {
     final actionTypes = SOTypeRegistry.all
-        .where((t) => t.category == 'Actions' || t.category == 'Queries')
+        .where(
+          (t) =>
+              (t.category == 'Actions' || t.category == 'Queries') &&
+              t.key != 'ConsiderationFunctionSO',
+        )
         .toList();
     SOTypeInfo? selected = actionTypes.first;
+    final folderController = TextEditingController(
+      text: actionTypes.first.subfolder,
+    );
     final nameController = TextEditingController();
 
     await showModalBottomSheet<void>(
@@ -310,13 +318,27 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
                       ),
                     )
                     .toList(),
-                onChanged: (v) => selected = v,
+                onChanged: (v) {
+                  selected = v;
+                  if (v != null) {
+                    folderController.text = v.subfolder;
+                  }
+                },
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextField(
+                controller: folderController,
+                decoration: const InputDecoration(
+                  labelText: 'Folder path',
+                  hintText: 'e.g. beliefs, queries',
+                ),
+                textCapitalization: TextCapitalization.none,
               ),
               const SizedBox(height: AppSpacing.sm),
               TextField(
                 controller: nameController,
                 decoration: const InputDecoration(
-                  labelText: 'Asset name (file name)',
+                  labelText: 'File name',
                 ),
                 textCapitalization: TextCapitalization.none,
               ),
@@ -325,12 +347,17 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
                 onPressed: () {
                   final name = nameController.text.trim();
                   if (name.isEmpty || selected == null) return;
-                  context.read<GameDataBloc>().add(
-                    GameDataCreateRequested(typeInfo: selected!, name: name),
-                  );
                   Navigator.pop(sheetContext);
+                  context.push(
+                    '/so-edit',
+                    extra: SOEditRouteArgs(
+                      typeInfo: selected,
+                      suggestedFolder: folderController.text.trim(),
+                      initialFileName: name,
+                    ),
+                  );
                 },
-                child: const Text('Create JSON file'),
+                child: const Text('Create and edit'),
               ),
             ],
           ),

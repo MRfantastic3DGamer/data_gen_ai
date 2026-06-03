@@ -86,11 +86,20 @@ class HomeScreen extends StatelessWidget {
             sliver: SliverList(
               delegate: SliverChildListDelegate(<Widget>[
                 NavCard(
-                  title: 'Actions & Beliefs',
-                  subtitle: 'Search, filter, and edit exported JSON',
-                  icon: Icons.play_circle_outline_rounded,
+                  title: 'Utility AI',
+                  subtitle:
+                      'Beliefs, belief selection, considerables, queries',
+                  icon: Icons.psychology_rounded,
                   iconColor: colorScheme.primary,
                   delayMs: 0,
+                  onTap: () => context.push('/utility-ai'),
+                ),
+                NavCard(
+                  title: 'All game data',
+                  subtitle: 'Search every JSON file (actionables, etc.)',
+                  icon: Icons.play_circle_outline_rounded,
+                  iconColor: colorScheme.primary,
+                  delayMs: 20,
                   onTap: () => context.push('/actions'),
                 ),
                 NavCard(

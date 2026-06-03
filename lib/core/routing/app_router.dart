@@ -16,6 +16,7 @@ import 'package:data_gen_ai/screens/registries/factions_table_screen.dart';
 import 'package:data_gen_ai/screens/registries/registries_hub_screen.dart';
 import 'package:data_gen_ai/screens/registries/work_types_table_screen.dart';
 import 'package:data_gen_ai/screens/settings/data_folder_screen.dart';
+import 'package:data_gen_ai/screens/utility_ai/utility_ai_hub_screen.dart';
 import 'package:data_gen_ai/services/registry_catalog_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -31,6 +32,10 @@ class AppRouter {
       GoRoute(
         path: '/actions',
         builder: (context, state) => const ActionsHubScreen(),
+      ),
+      GoRoute(
+        path: '/utility-ai',
+        builder: (context, state) => const UtilityAIHubScreen(),
       ),
       GoRoute(
         path: '/so-edit',
