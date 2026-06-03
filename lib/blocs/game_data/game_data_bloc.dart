@@ -145,6 +145,15 @@ class GameDataBloc extends Bloc<GameDataEvent, GameDataState> {
           'TimeField': 0,
           'TimeFieldMultiplier': 0,
         };
+      case 'ActionCatalogEntrySO':
+        return <String, dynamic>{
+          'actionId': 0,
+          'editorName': '',
+          'animation': 0,
+          'category': '',
+          'gameplayDisplayName': '',
+          'tags': <dynamic>[],
+        };
       case 'BeliefSO':
         return <String, dynamic>{
           'queryViewAsset': <String, dynamic>{'fileID': 0},

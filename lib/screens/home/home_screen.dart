@@ -95,7 +95,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 NavCard(
                   title: 'Registries',
-                  subtitle: 'Factions & animation type tables',
+                  subtitle: 'Factions, actions, animation & work type tables',
                   icon: Icons.table_chart_rounded,
                   iconColor: colorScheme.secondary,
                   delayMs: 40,

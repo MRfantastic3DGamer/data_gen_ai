@@ -1,18 +1,24 @@
+import 'package:data_gen_ai/models/action_catalog_entry_so.dart';
 import 'package:data_gen_ai/models/animation_types_config_model.dart';
+import 'package:data_gen_ai/models/armature_types_config_model.dart';
 import 'package:data_gen_ai/models/factions_config_model.dart';
-import 'package:data_gen_ai/models/work_types_config_model.dart';
 import 'package:data_gen_ai/models/game_data_file_entry.dart';
 import 'package:data_gen_ai/models/registry_option.dart';
+import 'package:data_gen_ai/models/work_types_config_model.dart';
 import 'package:data_gen_ai/models/unity_envelope.dart';
 import 'package:data_gen_ai/models/unity_reference.dart';
 import 'package:data_gen_ai/repositories/project_repository.dart';
 
-/// Indexes FactionsConfig and AnimationTypesConfig exports (Unity registry tables).
+/// Indexes registry tables (factions, animation types, work types, action catalog).
 class RegistryCatalogService {
   FactionsConfigFile? factionsFile;
   WorkTypesConfigFile? workTypesFile;
   final List<AnimationTypesConfigFile> animationTypesFiles =
       <AnimationTypesConfigFile>[];
+  final List<ArmatureTypesConfigFile> armatureTypesFiles =
+      <ArmatureTypesConfigFile>[];
+  final List<ActionCatalogEntryFile> actionCatalogEntries =
+      <ActionCatalogEntryFile>[];
 
   final Map<int, AnimationTypesConfigFile> factionToTypesFile =
       <int, AnimationTypesConfigFile>{};
@@ -20,14 +26,26 @@ class RegistryCatalogService {
   final Map<String, AnimationTypesConfigFile> typesByGuid =
       <String, AnimationTypesConfigFile>{};
 
-  bool get isLoaded => factionsFile != null || animationTypesFiles.isNotEmpty;
+  final Map<String, AnimationTypesConfigFile> typesByPathStem =
+      <String, AnimationTypesConfigFile>{};
+
+  final Map<int, String> _actionIdLabels = <int, String>{};
+
+  bool get isLoaded =>
+      factionsFile != null ||
+      animationTypesFiles.isNotEmpty ||
+      actionCatalogEntries.isNotEmpty;
 
   Future<void> reload(ProjectRepository repository) async {
     factionsFile = null;
     workTypesFile = null;
     animationTypesFiles.clear();
+    armatureTypesFiles.clear();
+    actionCatalogEntries.clear();
     factionToTypesFile.clear();
     typesByGuid.clear();
+    typesByPathStem.clear();
+    _actionIdLabels.clear();
 
     final entries = await repository.loadAllEntries();
     final databases = <GameDataFileEntry>[];
@@ -47,14 +65,39 @@ class RegistryCatalogService {
           model: WorkTypesConfigModel.fromJson(entry.payload),
         );
       } else if (id.contains('AnimationTypesConfig')) {
-        animationTypesFiles.add(
-          AnimationTypesConfigFile(
+        final file = AnimationTypesConfigFile(
+          path: entry.path,
+          displayName: entry.displayName,
+          guid: '',
+          model: AnimationTypesConfigModel.fromJson(entry.payload),
+        );
+        animationTypesFiles.add(file);
+        typesByPathStem[_pathStem(entry.path)] = file;
+      } else if (id.contains('ArmatureTypesConfig')) {
+        armatureTypesFiles.add(
+          ArmatureTypesConfigFile(
             path: entry.path,
             displayName: entry.displayName,
-            guid: '',
-            model: AnimationTypesConfigModel.fromJson(entry.payload),
+            envelope: entry.envelope,
+            model: ArmatureTypesConfigModel.fromJson(entry.payload),
           ),
         );
+      } else if (id.contains('ActionCatalogEntrySO')) {
+        final model = ActionCatalogEntrySOModel.fromJson(entry.payload);
+        actionCatalogEntries.add(
+          ActionCatalogEntryFile(
+            path: entry.path,
+            displayName: entry.displayName,
+            envelope: entry.envelope,
+            model: model,
+          ),
+        );
+        _registerActionLabel(model.actionId, _actionEntryLabel(model, entry));
+      } else if (id.contains('ActionableSO')) {
+        final actionId = (entry.payload['action'] ?? -1) as int;
+        if (actionId >= 0) {
+          _registerActionLabel(actionId, '${entry.displayName} [$actionId]');
+        }
       } else if (id.contains('CharacterAnimationDatabase')) {
         databases.add(entry);
       }
@@ -63,12 +106,17 @@ class RegistryCatalogService {
     animationTypesFiles.sort(
       (a, b) => a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
     );
+    actionCatalogEntries.sort(
+      (a, b) => a.model.actionId.compareTo(b.model.actionId),
+    );
+    armatureTypesFiles.sort(
+      (a, b) => a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
+    );
 
     for (final db in databases) {
       _linkDatabase(db);
     }
 
-    // Learn guids from any reference in all payloads pointing at a known types path.
     for (final entry in entries) {
       _scanRefs(entry.payload, (ref) {
         final matched = _fileForTypesGuid(ref.guid);
@@ -86,7 +134,10 @@ class RegistryCatalogService {
     );
 
     var matched = typesRef.guid.isNotEmpty ? typesByGuid[typesRef.guid] : null;
-    matched ??= _matchTypesFileForFaction(faction);
+    matched ??= _matchTypesFileForDatabase(entry, faction);
+    if (matched == null && animationTypesFiles.length == 1) {
+      matched = animationTypesFiles.first;
+    }
     if (matched == null) return;
 
     final index = animationTypesFiles.indexWhere((f) => f.path == matched!.path);
@@ -107,6 +158,20 @@ class RegistryCatalogService {
     }
   }
 
+  AnimationTypesConfigFile? _matchTypesFileForDatabase(
+    GameDataFileEntry databaseEntry,
+    int factionId,
+  ) {
+    final dbStem = _pathStem(databaseEntry.path).toLowerCase();
+    for (final file in animationTypesFiles) {
+      final typesStem = _pathStem(file.path).toLowerCase();
+      if (dbStem.contains(typesStem) || typesStem.contains(dbStem)) {
+        return file;
+      }
+    }
+    return _matchTypesFileForFaction(factionId);
+  }
+
   AnimationTypesConfigFile? _matchTypesFileForFaction(int factionId) {
     final name = factionLabel(factionId).toLowerCase();
     for (final file in animationTypesFiles) {
@@ -119,8 +184,7 @@ class RegistryCatalogService {
 
   AnimationTypesConfigFile? _fileForTypesGuid(String guid) {
     if (guid.isEmpty) return null;
-    if (typesByGuid.containsKey(guid)) return typesByGuid[guid];
-    return null;
+    return typesByGuid[guid];
   }
 
   void _scanRefs(
@@ -139,6 +203,28 @@ class RegistryCatalogService {
         _scanRefs(item, onRef);
       }
     }
+  }
+
+  void _registerActionLabel(int actionId, String label) {
+    if (actionId < 0) return;
+    final existing = _actionIdLabels[actionId];
+    if (existing == null || existing.startsWith('Action_')) {
+      _actionIdLabels[actionId] = label;
+    }
+  }
+
+  String _actionEntryLabel(
+    ActionCatalogEntrySOModel model,
+    GameDataFileEntry entry,
+  ) {
+    final name = model.editorName.trim();
+    if (name.isNotEmpty) return '$name [${model.actionId}]';
+    return '${entry.displayName} [${model.actionId}]';
+  }
+
+  static String _pathStem(String path) {
+    final fileName = path.split('/').last;
+    return fileName.replaceAll('.json', '');
   }
 
   List<RegistryOption<int>> factionOptions({bool allowNone = true}) {
@@ -176,6 +262,22 @@ class RegistryCatalogService {
     return options;
   }
 
+  List<RegistryOption<int>> actionOptions() {
+    final options = <RegistryOption<int>>[
+      const RegistryOption<int>(label: '(None) [-1]', value: -1),
+    ];
+    final ids = _actionIdLabels.keys.toList()..sort();
+    for (final id in ids) {
+      options.add(
+        RegistryOption<int>(
+          label: _actionIdLabels[id] ?? 'Action_$id [$id]',
+          value: id,
+        ),
+      );
+    }
+    return options;
+  }
+
   AnimationTypesConfigFile? resolveTypesConfig({
     String? typesConfigGuid,
     int? factionId,
@@ -188,7 +290,7 @@ class RegistryCatalogService {
     if (factionId != null && factionToTypesFile.containsKey(factionId)) {
       return factionToTypesFile[factionId];
     }
-  if (animationTypesFiles.length == 1) return animationTypesFiles.first;
+    if (animationTypesFiles.length == 1) return animationTypesFiles.first;
     return null;
   }
 
@@ -219,4 +321,18 @@ class WorkTypesConfigFile {
   final String path;
   final UnityEnvelope envelope;
   final WorkTypesConfigModel model;
+}
+
+class ActionCatalogEntryFile {
+  const ActionCatalogEntryFile({
+    required this.path,
+    required this.displayName,
+    required this.envelope,
+    required this.model,
+  });
+
+  final String path;
+  final String displayName;
+  final UnityEnvelope envelope;
+  final ActionCatalogEntrySOModel model;
 }

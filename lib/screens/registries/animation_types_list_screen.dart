@@ -1,9 +1,23 @@
 import 'package:data_gen_ai/services/registry_catalog_service.dart';
+import 'package:data_gen_ai/widgets/common/registry_catalog_listener.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class AnimationTypesListScreen extends StatelessWidget {
   const AnimationTypesListScreen({super.key, required this.catalog});
+
+  final RegistryCatalogService catalog;
+
+  @override
+  Widget build(BuildContext context) {
+    return RegistryCatalogListener(
+      child: _AnimationTypesListBody(catalog: catalog),
+    );
+  }
+}
+
+class _AnimationTypesListBody extends StatelessWidget {
+  const _AnimationTypesListBody({required this.catalog});
 
   final RegistryCatalogService catalog;
 

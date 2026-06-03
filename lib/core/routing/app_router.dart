@@ -8,7 +8,9 @@ import 'package:data_gen_ai/screens/generic_editor/generic_editor_screen.dart';
 import 'package:data_gen_ai/screens/home/home_screen.dart';
 import 'package:data_gen_ai/screens/item/item_editor_screen.dart';
 import 'package:data_gen_ai/screens/item/item_list_screen.dart';
+import 'package:data_gen_ai/screens/registries/actions_table_screen.dart';
 import 'package:data_gen_ai/screens/registries/animation_types_list_screen.dart';
+import 'package:data_gen_ai/widgets/common/registry_catalog_listener.dart';
 import 'package:data_gen_ai/screens/registries/animation_types_table_screen.dart';
 import 'package:data_gen_ai/screens/registries/factions_table_screen.dart';
 import 'package:data_gen_ai/screens/registries/registries_hub_screen.dart';
@@ -40,8 +42,18 @@ class AppRouter {
       ),
       GoRoute(
         path: '/registries',
-        builder: (context, state) => RegistriesHubScreen(
-          catalog: context.read<RegistryCatalogService>(),
+        builder: (context, state) => RegistryCatalogListener(
+          child: RegistriesHubScreen(
+            catalog: context.read<RegistryCatalogService>(),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/registries/actions',
+        builder: (context, state) => RegistryCatalogListener(
+          child: ActionsTableScreen(
+            catalog: context.read<RegistryCatalogService>(),
+          ),
         ),
       ),
       GoRoute(

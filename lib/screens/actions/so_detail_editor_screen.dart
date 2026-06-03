@@ -7,7 +7,10 @@ import 'package:data_gen_ai/widgets/common/json_preview_panel.dart';
 import 'package:data_gen_ai/widgets/editors/action_catalog_entry_editor_form.dart';
 import 'package:data_gen_ai/widgets/editors/action_catalog_registry_editor_form.dart';
 import 'package:data_gen_ai/widgets/editors/actionable_editor_form.dart';
+import 'package:data_gen_ai/widgets/editors/animation_types_config_editor_form.dart';
+import 'package:data_gen_ai/widgets/editors/armature_types_config_editor_form.dart';
 import 'package:data_gen_ai/widgets/editors/animation_registry_editor_form.dart';
+import 'package:data_gen_ai/widgets/editors/factions_config_editor_form.dart';
 import 'package:data_gen_ai/widgets/editors/belief_editor_form.dart';
 import 'package:data_gen_ai/widgets/editors/belief_selection_editor_form.dart';
 import 'package:data_gen_ai/widgets/editors/character_animation_database_editor_form.dart';
@@ -176,6 +179,12 @@ class _SODetailEditorScreenState extends State<SODetailEditorScreen> {
         return MoveLibrarySOEditorForm(entry: entry, onChanged: _onChanged);
       case 'AnimationRegistry':
         return AnimationRegistryEditorForm(entry: entry, onChanged: _onChanged);
+      case 'FactionsConfig':
+        return FactionsConfigEditorForm(entry: entry, onChanged: _onChanged);
+      case 'AnimationTypesConfig':
+        return AnimationTypesConfigEditorForm(entry: entry, onChanged: _onChanged);
+      case 'ArmatureTypesConfig':
+        return ArmatureTypesConfigEditorForm(entry: entry, onChanged: _onChanged);
       default:
         if (classId.contains('CharacterStatsSO')) {
           return CharacterStatsSOEditorForm(entry: entry, onChanged: _onChanged);
@@ -188,6 +197,21 @@ class _SODetailEditorScreenState extends State<SODetailEditorScreen> {
         }
         if (classId.contains('AnimationRegistry')) {
           return AnimationRegistryEditorForm(
+            entry: entry,
+            onChanged: _onChanged,
+          );
+        }
+        if (classId.contains('FactionsConfig')) {
+          return FactionsConfigEditorForm(entry: entry, onChanged: _onChanged);
+        }
+        if (classId.contains('AnimationTypesConfig')) {
+          return AnimationTypesConfigEditorForm(
+            entry: entry,
+            onChanged: _onChanged,
+          );
+        }
+        if (classId.contains('ArmatureTypesConfig')) {
+          return ArmatureTypesConfigEditorForm(
             entry: entry,
             onChanged: _onChanged,
           );
