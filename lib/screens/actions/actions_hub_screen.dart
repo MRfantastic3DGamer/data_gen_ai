@@ -255,10 +255,15 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
   }
 
   Widget _entryTile(BuildContext context, GameDataFileEntry entry) {
+    final fileLabel = entry.path.split('/').last;
+    final title = fileLabel.endsWith('.json')
+        ? fileLabel.substring(0, fileLabel.length - 5)
+        : fileLabel;
     return GameDataListTile(
-      title: entry.displayName,
-      subtitle: entry.path.split('/').last,
+      title: title,
+      subtitle: entry.typeLabel,
       typeLabel: entry.typeLabel,
+      filePath: entry.path,
       isDirty: entry.isDirty,
       onTap: () => context.push('/so-edit', extra: entry.path),
     );

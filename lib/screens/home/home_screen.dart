@@ -64,7 +64,7 @@ class HomeScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Edit Unity GameData via Firebase or local JSON',
+                              'Edit locally, sync with Firebase when ready',
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyMedium
@@ -102,8 +102,8 @@ class HomeScreen extends StatelessWidget {
                   onTap: () => context.push('/registries'),
                 ),
                 NavCard(
-                  title: 'Data source',
-                  subtitle: 'Firebase Realtime DB or local RAW folder',
+                  title: 'Sync & local folder',
+                  subtitle: 'Pull from Firebase · edit locally · push changes',
                   icon: Icons.cloud_sync_outlined,
                   iconColor: colorScheme.tertiary,
                   delayMs: 80,

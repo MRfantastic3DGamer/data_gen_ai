@@ -23,8 +23,11 @@ class CharacterUpdated extends CharacterEvent {
 }
 
 class CharacterSaved extends CharacterEvent {
-  const CharacterSaved(this.path);
-  final String path;
+  const CharacterSaved({this.path, required this.fileName});
+
+  final String? path;
+  final String fileName;
+
   @override
-  List<Object?> get props => <Object?>[path];
+  List<Object?> get props => <Object?>[path, fileName];
 }

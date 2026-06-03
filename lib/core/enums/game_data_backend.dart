@@ -11,7 +11,7 @@ enum GameDataBackend {
   static GameDataBackend fromStorageKey(String? key) {
     return GameDataBackend.values.firstWhere(
       (b) => b.storageKey == key,
-      orElse: () => GameDataBackend.firebase,
+      orElse: () => GameDataBackend.localFiles,
     );
   }
 }

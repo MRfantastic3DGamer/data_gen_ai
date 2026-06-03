@@ -22,13 +22,14 @@ class CharacterState extends Equatable {
     String? path,
     bool? saved,
     String? error,
+    bool clearError = false,
   }) {
     return CharacterState(
       loading: loading ?? this.loading,
       data: data ?? this.data,
       path: path ?? this.path,
       saved: saved ?? this.saved,
-      error: error,
+      error: clearError ? null : (error ?? this.error),
     );
   }
 
