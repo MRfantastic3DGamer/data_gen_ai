@@ -2,6 +2,7 @@ import 'package:data_gen_ai/models/animation_types_config_model.dart';
 import 'package:data_gen_ai/models/game_data_file_entry.dart';
 import 'package:data_gen_ai/widgets/editors/so_editor_utils.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
+import 'package:data_gen_ai/widgets/editors/editor_list_view.dart';
 import 'package:flutter/material.dart';
 
 class AnimationTypesConfigEditorForm extends StatefulWidget {
@@ -36,7 +37,7 @@ class _AnimationTypesConfigEditorFormState
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
+    return EditorListView(
       padding: const EdgeInsets.all(12),
       children: <Widget>[
         SectionCard(

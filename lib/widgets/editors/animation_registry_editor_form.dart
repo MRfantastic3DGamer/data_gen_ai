@@ -4,6 +4,7 @@ import 'package:data_gen_ai/models/unity_reference.dart';
 import 'package:data_gen_ai/widgets/editors/so_editor_utils.dart';
 import 'package:data_gen_ai/widgets/forms/list_editor.dart';
 import 'package:data_gen_ai/widgets/forms/asset_reference_field.dart';
+import 'package:data_gen_ai/widgets/editors/editor_list_view.dart';
 import 'package:flutter/material.dart';
 
 class AnimationRegistryEditorForm extends StatefulWidget {
@@ -38,7 +39,7 @@ class _AnimationRegistryEditorFormState
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
+    return EditorListView(
       padding: const EdgeInsets.all(12),
       children: <Widget>[
         ListEditor(

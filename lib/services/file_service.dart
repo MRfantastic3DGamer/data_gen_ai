@@ -98,4 +98,20 @@ class FileService {
   Future<void> writeJson(String path, Map<String, dynamic> json) async {
     await writeFile(path, const JsonEncoder.withIndent('  ').convert(json));
   }
+
+  /// Removes all files under the RAW root so a Firebase pull matches remote exactly.
+  Future<void> clearRawRootDirectory() async {
+    final root = await getRawRootDirectory();
+    if (!await root.exists()) {
+      await root.create(recursive: true);
+      return;
+    }
+    await for (final entity in root.list(recursive: false)) {
+      if (entity is File) {
+        await entity.delete();
+      } else if (entity is Directory) {
+        await entity.delete(recursive: true);
+      }
+    }
+  }
 }

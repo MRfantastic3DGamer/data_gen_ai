@@ -8,6 +8,7 @@ import 'package:data_gen_ai/widgets/forms/faction_id_dropdown.dart';
 import 'package:data_gen_ai/widgets/forms/list_editor.dart';
 import 'package:data_gen_ai/widgets/forms/asset_reference_field.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
+import 'package:data_gen_ai/widgets/editors/editor_list_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -44,7 +45,7 @@ class _CharacterAnimationDatabaseEditorFormState
   @override
   Widget build(BuildContext context) {
     final catalog = context.read<RegistryCatalogService>();
-    return ListView(
+    return EditorListView(
       padding: const EdgeInsets.all(12),
       children: <Widget>[
         SectionCard(

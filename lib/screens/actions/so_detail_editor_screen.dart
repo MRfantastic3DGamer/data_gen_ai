@@ -272,6 +272,16 @@ class _SODetailEditorScreenState extends State<SODetailEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final args = SOEditRouteArgs.tryParse(GoRouterState.of(context).extra);
+    if (args == null && !_loading && _entry == null && _error == null) {
+      return Scaffold(
+        appBar: AppBar(),
+        body: const Center(
+          child: Text('No file specified. Open an asset from the list.'),
+        ),
+      );
+    }
+
     if (_loading) {
       return Scaffold(
         appBar: AppBar(),
@@ -312,41 +322,39 @@ class _SODetailEditorScreenState extends State<SODetailEditorScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: <Widget>[
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(12),
-              children: <Widget>[
-                GameDataSaveLocationCard(
-                  folderController: _folderController,
-                  fileNameController: _fileNameController,
-                  readOnly: !_isNew,
-                ),
-                if (isQueryView && _isNew)
-                  SectionCard(
-                    title: 'Query type',
-                    child: DropdownButtonFormField<String>(
-                      value: _queryViewTypeKey,
-                      decoration: const InputDecoration(
-                        labelText: 'Query view class',
-                      ),
-                      items: QueryViewTypes.all
-                          .map(
-                            (t) => DropdownMenuItem<String>(
-                              value: t.key,
-                              child: Text(t.displayName),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: _onQueryTypeChanged,
-                    ),
-                  ),
-                _buildEditor(typeKey, classId, isQueryView, entry),
-              ],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            GameDataSaveLocationCard(
+              folderController: _folderController,
+              fileNameController: _fileNameController,
+              readOnly: !_isNew,
             ),
-          ),
-        ],
+            if (isQueryView && _isNew)
+              SectionCard(
+                title: 'Query type',
+                child: DropdownButtonFormField<String>(
+                  value: _queryViewTypeKey,
+                  decoration: const InputDecoration(
+                    labelText: 'Query view class',
+                  ),
+                  items: QueryViewTypes.all
+                      .map(
+                        (t) => DropdownMenuItem<String>(
+                          value: t.key,
+                          child: Text(t.displayName),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: _onQueryTypeChanged,
+                ),
+              ),
+            _buildEditor(typeKey, classId, isQueryView, entry),
+            const SizedBox(height: 80),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _saving ? null : _save,

@@ -1,5 +1,6 @@
 import 'package:data_gen_ai/core/enums/consideration_mode.dart';
 import 'package:data_gen_ai/core/enums/consideration_type.dart';
+import 'package:data_gen_ai/widgets/forms/consideration_curve_preview.dart';
 import 'package:data_gen_ai/widgets/forms/bool_toggle.dart';
 import 'package:data_gen_ai/widgets/forms/enum_dropdown.dart';
 import 'package:data_gen_ai/widgets/forms/float_field.dart';
@@ -40,6 +41,8 @@ class ConsiderationFunctionConfigEditor extends StatelessWidget {
 
     return Column(
       children: <Widget>[
+        ConsiderationCurvePreview(config: config),
+        const SizedBox(height: 12),
         EnumDropdown(
           label: 'Mode',
           value: mode,

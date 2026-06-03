@@ -6,6 +6,7 @@ import 'package:data_gen_ai/widgets/forms/combo_state_grid_editor.dart';
 import 'package:data_gen_ai/widgets/forms/int_field.dart';
 import 'package:data_gen_ai/widgets/forms/asset_reference_field.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
+import 'package:data_gen_ai/widgets/editors/editor_list_view.dart';
 import 'package:flutter/material.dart';
 
 class ComboDataSOEditorForm extends StatefulWidget {
@@ -38,7 +39,7 @@ class _ComboDataSOEditorFormState extends State<ComboDataSOEditorForm> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
+    return EditorListView(
       padding: const EdgeInsets.all(12),
       children: <Widget>[
         SectionCard(

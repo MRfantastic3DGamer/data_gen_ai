@@ -21,6 +21,7 @@ class GameDataSyncService {
   Future<GameDataSyncResult> pullFromFirebase({
     void Function(int current, int total, String key)? onProgress,
   }) async {
+    await _local.clearAllLocalFiles();
     final keys = await _firebase.listJsonKeys();
     final total = keys.length;
     var index = 0;

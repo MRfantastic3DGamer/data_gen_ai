@@ -4,6 +4,7 @@ import 'package:data_gen_ai/widgets/editors/so_editor_utils.dart';
 import 'package:data_gen_ai/widgets/forms/float_field.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:data_gen_ai/widgets/forms/vector2_field.dart';
+import 'package:data_gen_ai/widgets/editors/editor_list_view.dart';
 import 'package:flutter/material.dart';
 
 class CharacterStatsSOEditorForm extends StatefulWidget {
@@ -46,7 +47,7 @@ class _CharacterStatsSOEditorFormState extends State<CharacterStatsSOEditorForm>
       _model.baseStats['TemperaturePreference'] as Map? ??
           <String, dynamic>{'x': 20, 'y': 25},
     );
-    return ListView(
+    return EditorListView(
       padding: const EdgeInsets.all(12),
       children: <Widget>[
         SectionCard(

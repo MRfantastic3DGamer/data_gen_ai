@@ -62,7 +62,7 @@ class _CharacterListScreenState extends State<CharacterListScreen> {
                   : '';
               return GameDataListTile(
                 title: _titleFromPath(entry.path),
-                subtitle: parent.isEmpty ? entry.typeLabel : parent,
+                subtitle: parent.isEmpty ? entry.category : parent,
                 typeLabel: entry.typeLabel,
                 filePath: entry.path,
                 isDirty: entry.isDirty,

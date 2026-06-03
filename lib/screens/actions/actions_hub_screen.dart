@@ -247,11 +247,28 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
       );
     }
 
-    return ListView.builder(
+    final grouped = <String, List<GameDataFileEntry>>{};
+    for (final entry in entries) {
+      grouped.putIfAbsent(entry.category, () => <GameDataFileEntry>[]).add(entry);
+    }
+    final categories = grouped.keys.toList()..sort();
+
+    return ListView(
       padding: const EdgeInsets.only(bottom: 88),
-      itemCount: entries.length,
-      itemBuilder: (context, index) =>
-          _entryTile(context, entries[index]),
+      children: <Widget>[
+        for (final category in categories)
+          ExpansionTile(
+            initiallyExpanded: true,
+            title: Text(
+              category,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text('${grouped[category]!.length} file(s)'),
+            children: grouped[category]!
+                .map((entry) => _entryTile(context, entry))
+                .toList(),
+          ),
+      ],
     );
   }
 
@@ -262,7 +279,7 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
         : fileLabel;
     return GameDataListTile(
       title: title,
-      subtitle: entry.typeLabel,
+      subtitle: entry.category,
       typeLabel: entry.typeLabel,
       filePath: entry.path,
       isDirty: entry.isDirty,

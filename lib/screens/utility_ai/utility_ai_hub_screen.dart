@@ -176,66 +176,61 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  if (subtitle != null) ...<Widget>[
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle!,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            TextButton.icon(
-              onPressed: onNew,
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('New'),
-            ),
-          ],
-        ),
-        if (entries.isEmpty)
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-            child: Text(
-              'No files yet — tap New to create one.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          )
-        else
-          ...entries.map(
-            (entry) => GameDataListTile(
-              title: GameDataKeyBuilder.baseNameFromKey(entry.path),
-              subtitle: entry.typeLabel,
-              typeLabel: entry.typeLabel,
-              filePath: entry.path,
-              isDirty: entry.isDirty,
-              onTap: () => context.push(
-                '/so-edit',
-                extra: SOEditRouteArgs(existingPath: entry.path),
-              ),
-            ),
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        initiallyExpanded: true,
+        title: Text(
+          title,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
           ),
-        const SizedBox(height: AppSpacing.sm),
-      ],
+        ),
+        subtitle: subtitle != null
+            ? Text(subtitle!)
+            : Text(
+                entries.isEmpty
+                    ? 'No files yet'
+                    : '${entries.length} file(s)',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+        trailing: TextButton.icon(
+          onPressed: onNew,
+          icon: const Icon(Icons.add_rounded, size: 20),
+          label: const Text('New'),
+        ),
+        children: <Widget>[
+          if (entries.isEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Text(
+                'No files yet — tap New to create one.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            )
+          else
+            ...entries.map(
+              (entry) => GameDataListTile(
+                title: GameDataKeyBuilder.baseNameFromKey(entry.path),
+                subtitle: entry.category,
+                typeLabel: entry.typeLabel,
+                filePath: entry.path,
+                isDirty: entry.isDirty,
+                onTap: () => context.push(
+                  '/so-edit',
+                  extra: SOEditRouteArgs(existingPath: entry.path),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
