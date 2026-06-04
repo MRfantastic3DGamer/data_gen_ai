@@ -1,5 +1,6 @@
 import 'package:data_gen_ai/blocs/game_data/game_data_bloc.dart';
 import 'package:data_gen_ai/blocs/game_data/game_data_event.dart';
+import 'package:data_gen_ai/core/routing/game_data_editor_navigation.dart';
 import 'package:data_gen_ai/core/query_view_types.dart';
 import 'package:data_gen_ai/core/so_type_registry.dart';
 import 'package:data_gen_ai/models/game_data_file_entry.dart';
@@ -85,6 +86,13 @@ class _SODetailEditorScreenState extends State<SODetailEditorScreen> {
 
   void _initNew(SOEditRouteArgs args) {
     final typeInfo = args.typeInfo!;
+    if (typeInfo.key == 'CharacterData' || typeInfo.key == 'ItemData') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        openNewGameDataEditor(context, typeInfo);
+      });
+      return;
+    }
     _queryViewTypeKey = args.queryViewTypeKey ??
         (typeInfo.key == 'BaseQueryViewSO'
             ? QueryViewTypes.all.first.key
@@ -146,6 +154,17 @@ class _SODetailEditorScreenState extends State<SODetailEditorScreen> {
       existing ??= await context.read<ProjectRepository>().loadEntry(path);
 
       if (!mounted) return;
+      final typeKey = existing.typeInfo?.key;
+      if (typeKey == 'CharacterData' || typeKey == 'ItemData') {
+        openGameDataEditorByPath(
+          context,
+          path,
+          typeKey: typeKey,
+          replace: true,
+        );
+        return;
+      }
+
       _folderController.text = GameDataKeyBuilder.folderFromKey(path);
       _fileNameController.text = GameDataKeyBuilder.baseNameFromKey(path);
       _queryViewTypeKey = QueryViewTypes.fromClassIdentifier(
@@ -437,8 +456,7 @@ class _SODetailEditorScreenState extends State<SODetailEditorScreen> {
             onChanged: _onChanged,
           );
         }
-        return ListView(
-          padding: context.editorFormPadding,
+        return EditorFormList(
           children: <Widget>[
             SectionCard(
               title: 'JSON payload (${entry.typeLabel})',

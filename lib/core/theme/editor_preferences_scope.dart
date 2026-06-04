@@ -48,6 +48,8 @@ class EditorFormList extends StatelessWidget {
     final padding = context.editorFormPadding;
     return ListView(
       controller: controller,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       padding: padding.copyWith(bottom: padding.bottom + bottomPadding),
       children: children,
     );

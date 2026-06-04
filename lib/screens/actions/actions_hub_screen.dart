@@ -1,10 +1,9 @@
 import 'package:data_gen_ai/blocs/game_data/game_data_bloc.dart';
 import 'package:data_gen_ai/blocs/game_data/game_data_event.dart';
 import 'package:data_gen_ai/blocs/game_data/game_data_state.dart';
+import 'package:data_gen_ai/core/routing/game_data_editor_navigation.dart';
 import 'package:data_gen_ai/core/so_type_registry.dart';
-import 'package:data_gen_ai/models/so_edit_route_args.dart';
 import 'package:data_gen_ai/core/theme/app_spacing.dart';
-import 'package:data_gen_ai/models/game_data_file_entry.dart';
 import 'package:data_gen_ai/widgets/common/app_snackbar.dart';
 import 'package:data_gen_ai/widgets/common/empty_state.dart';
 import 'package:data_gen_ai/utils/game_data_tree_builder.dart';
@@ -256,8 +255,9 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
       initiallyExpandAll: state.searchQuery.trim().isNotEmpty,
       onFileTap: (node) {
         final path = node.path;
-        if (path != null) {
-          context.push('/so-edit', extra: path);
+        final entry = node.entry;
+        if (path != null && entry != null) {
+          openGameDataEditor(context, entry);
         }
       },
       fileBuilder: (context, node) {
@@ -311,7 +311,7 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
             subtitle: entry.path,
             typeLabel: entry.typeLabel,
             isDirty: entry.isDirty,
-            onTap: () => context.push('/so-edit', extra: entry.path),
+            onTap: () => openGameDataEditor(context, entry),
           ),
         );
       },
@@ -390,13 +390,11 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
                   final name = nameController.text.trim();
                   if (name.isEmpty || selected == null) return;
                   Navigator.pop(sheetContext);
-                  context.push(
-                    '/so-edit',
-                    extra: SOEditRouteArgs(
-                      typeInfo: selected,
-                      suggestedFolder: folderController.text.trim(),
-                      initialFileName: name,
-                    ),
+                  openNewGameDataEditorWithDetails(
+                    context,
+                    typeInfo: selected!,
+                    suggestedFolder: folderController.text.trim(),
+                    initialFileName: name,
                   );
                 },
                 child: const Text('Create and edit'),

@@ -1,16 +1,10 @@
 import 'package:data_gen_ai/core/theme/form_spacing.dart';
-import 'package:data_gen_ai/models/actuator_mapping.dart';
 import 'package:data_gen_ai/models/character_data.dart';
 import 'package:data_gen_ai/models/interaction_slot.dart';
-import 'package:data_gen_ai/models/unity_reference.dart';
 import 'package:data_gen_ai/services/registry_catalog_service.dart';
 import 'package:data_gen_ai/widgets/forms/action_id_dropdown.dart';
 import 'package:data_gen_ai/widgets/forms/bool_toggle.dart';
 import 'package:data_gen_ai/widgets/forms/character_stats_form.dart';
-import 'package:data_gen_ai/widgets/forms/config/actuator_mapping_row_editor.dart';
-import 'package:data_gen_ai/widgets/forms/config/eat_config_form.dart';
-import 'package:data_gen_ai/widgets/forms/config/navigate_config_form.dart';
-import 'package:data_gen_ai/widgets/forms/config/wait_config_form.dart';
 import 'package:data_gen_ai/widgets/forms/faction_id_dropdown.dart';
 import 'package:data_gen_ai/core/enums/character_types.dart';
 import 'package:data_gen_ai/models/asset_picker_option.dart';
@@ -114,59 +108,6 @@ class CharacterDataEditorForm extends StatelessWidget {
               ),
             ],
           ),
-        ),
-        SectionCard(
-          title: 'Default configs',
-          child: Column(
-            children: <Widget>[
-              NavigateConfigForm(
-                config: data.defaultNavigateConfig,
-                onChanged: (c) =>
-                    onChanged(data.copyWith(defaultNavigateConfig: c)),
-              ),
-              WaitConfigForm(
-                config: data.defaultWaitConfig,
-                factionId: data.faction,
-                onChanged: (c) => onChanged(data.copyWith(defaultWaitConfig: c)),
-              ),
-              EatConfigForm(
-                config: data.defaultEatConfig,
-                factionId: data.faction,
-                onChanged: (c) => onChanged(data.copyWith(defaultEatConfig: c)),
-              ),
-            ],
-          ),
-        ),
-        ListEditor(
-          title: 'Actuator mappings',
-          itemCount: data.actuatorMappings.length,
-          onAdd: () => onChanged(
-            data.copyWith(
-              actuatorMappings: <ActuatorMappingModel>[
-                ...data.actuatorMappings,
-                const ActuatorMappingModel(),
-              ],
-            ),
-          ),
-          itemBuilder: (context, index) {
-            return ActuatorMappingRowEditor(
-              value: data.actuatorMappings[index],
-              factionId: data.faction,
-              onChanged: (row) {
-                final list = List<ActuatorMappingModel>.from(
-                  data.actuatorMappings,
-                );
-                list[index] = row;
-                onChanged(data.copyWith(actuatorMappings: list));
-              },
-              onDelete: () {
-                final list = List<ActuatorMappingModel>.from(
-                  data.actuatorMappings,
-                )..removeAt(index);
-                onChanged(data.copyWith(actuatorMappings: list));
-              },
-            );
-          },
         ),
         ListEditor(
           title: 'Interaction slots',
