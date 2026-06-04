@@ -134,6 +134,13 @@ abstract final class AppTheme {
         side: BorderSide.none,
         padding: const EdgeInsets.symmetric(horizontal: 4),
       ),
+      inputDecorationTheme: theme.inputDecorationTheme.copyWith(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+        isDense: false,
+      ),
     );
   }
 }

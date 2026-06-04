@@ -132,6 +132,8 @@ class ProjectRepository {
     String? typeName,
     required String objectName,
     required Map<String, dynamic> payload,
+    String? folderPath,
+    String? classIdentifierOverride,
   }) async {
     final resolved = typeInfo ??
         typeInfoForName(typeName ?? '') ??
@@ -143,24 +145,47 @@ class ProjectRepository {
           category: 'Other',
         );
 
-    final fileName = objectName.endsWith('.json')
-        ? objectName
-        : '$objectName.json';
-    final key = resolved.subfolder.isEmpty
-        ? fileName
-        : '${resolved.subfolder}/$fileName';
+    final key = folderPath != null && folderPath.isNotEmpty
+        ? _keyFromFolderAndName(folderPath, objectName)
+        : _keyFromTypeDefaults(resolved, objectName);
+
+    final assetName = objectName.endsWith('.json')
+        ? objectName.substring(0, objectName.length - 5)
+        : objectName;
 
     final envelope = UnityEnvelope(
-      name: objectName.replaceAll('.json', ''),
-      editorClassIdentifier: resolved.classIdentifier,
-      serializationData: resolved.key == 'BeliefSO'
-          ? null
-          : const SerializationData(),
+      name: assetName,
+      editorClassIdentifier:
+          classIdentifierOverride ?? resolved.classIdentifier,
+      serializationData: _needsSerializationData(resolved.key)
+          ? const SerializationData()
+          : null,
       payload: payload,
     );
 
     await saveEnvelope(key, envelope);
     return GameDataPath.normalizeKey(key);
+  }
+
+  static String _keyFromFolderAndName(String folderPath, String objectName) {
+    var folder = folderPath.replaceAll('\\', '/').trim();
+    if (folder.endsWith('/')) folder = folder.substring(0, folder.length - 1);
+    final fileName = objectName.endsWith('.json') ? objectName : '$objectName.json';
+    final key = folder.isEmpty ? fileName : '$folder/$fileName';
+    return GameDataPath.normalizeKey(key);
+  }
+
+  static String _keyFromTypeDefaults(SOTypeInfo resolved, String objectName) {
+    final fileName = objectName.endsWith('.json')
+        ? objectName
+        : '$objectName.json';
+    return resolved.subfolder.isEmpty
+        ? fileName
+        : '${resolved.subfolder}/$fileName';
+  }
+
+  static bool _needsSerializationData(String typeKey) {
+    return typeKey != 'BeliefSO';
   }
 
   Future<int> commitAll(

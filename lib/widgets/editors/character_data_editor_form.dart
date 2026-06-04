@@ -1,3 +1,4 @@
+import 'package:data_gen_ai/core/theme/form_spacing.dart';
 import 'package:data_gen_ai/models/actuator_mapping.dart';
 import 'package:data_gen_ai/models/character_data.dart';
 import 'package:data_gen_ai/models/interaction_slot.dart';
@@ -40,13 +41,17 @@ class CharacterDataEditorForm extends StatelessWidget {
       children: <Widget>[
         SectionCard(
           title: 'Identity',
-          child: TextField(
-            controller: descriptionController,
-            maxLines: 2,
-            decoration: const InputDecoration(labelText: 'Description'),
-            onChanged: (v) => onChanged(data.copyWith(description: v)),
+          child: Padding(
+            padding: FormSpacing.fieldPadding,
+            child: TextField(
+              controller: descriptionController,
+              maxLines: 2,
+              decoration: const InputDecoration(labelText: 'Description'),
+              onChanged: (v) => onChanged(data.copyWith(description: v)),
+            ),
           ),
         ),
+        FormSpacing.gap(),
         SectionCard(
           title: 'Initial stats',
           child: CharacterStatsForm(

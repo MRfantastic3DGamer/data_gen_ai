@@ -7,6 +7,7 @@ import 'package:data_gen_ai/widgets/forms/asset_reference_field.dart';
 import 'package:data_gen_ai/widgets/forms/asset_reference_list_editor.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:data_gen_ai/widgets/forms/utility_ai_result_field_dropdown.dart';
+import 'package:data_gen_ai/widgets/editors/editor_list_view.dart';
 import 'package:flutter/material.dart';
 import 'package:data_gen_ai/core/theme/editor_preferences_scope.dart';
 

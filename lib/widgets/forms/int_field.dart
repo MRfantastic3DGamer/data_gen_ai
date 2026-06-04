@@ -1,3 +1,4 @@
+import 'package:data_gen_ai/core/theme/form_spacing.dart';
 import 'package:flutter/material.dart';
 
 class IntField extends StatelessWidget {
@@ -14,11 +15,14 @@ class IntField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      initialValue: initialValue.toString(),
-      decoration: InputDecoration(labelText: label),
-      keyboardType: TextInputType.number,
-      onChanged: (raw) => onChanged(int.tryParse(raw) ?? 0),
+    return Padding(
+      padding: FormSpacing.fieldPadding,
+      child: TextFormField(
+        initialValue: initialValue.toString(),
+        decoration: InputDecoration(labelText: label),
+        keyboardType: TextInputType.number,
+        onChanged: (raw) => onChanged(int.tryParse(raw) ?? 0),
+      ),
     );
   }
 }

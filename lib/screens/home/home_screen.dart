@@ -63,7 +63,7 @@ class HomeScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Edit Unity GameData via Firebase or local JSON',
+                              'Edit locally, sync with Firebase when ready',
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyMedium
@@ -95,7 +95,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 NavCard(
                   title: 'Registries',
-                  subtitle: 'Factions & animation type tables',
+                  subtitle: 'Factions, actions, animation & work type tables',
                   icon: Icons.table_chart_rounded,
                   iconColor: colorScheme.secondary,
                   delayMs: 40,

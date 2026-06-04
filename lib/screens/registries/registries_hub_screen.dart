@@ -13,6 +13,7 @@ class RegistriesHubScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final factionCount = catalog.factionsFile?.model.factions.length ?? 0;
     final animConfigCount = catalog.animationTypesFiles.length;
+    final actionCount = catalog.actionCatalogEntries.length;
     final workTypeCount = catalog.workTypesFile?.model.types.length ?? 0;
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -37,6 +38,16 @@ class RegistriesHubScreen extends StatelessWidget {
             icon: Icons.groups_rounded,
             iconColor: colorScheme.primary,
             onTap: () => context.push('/registries/factions'),
+          ),
+          NavCard(
+            title: 'Action catalog',
+            subtitle: actionCount == 0
+                ? 'No ActionCatalogEntrySO JSON found'
+                : '$actionCount catalog entry(ies) · action ids for actionables',
+            icon: Icons.playlist_play_rounded,
+            iconColor: colorScheme.primary,
+            delayMs: 30,
+            onTap: () => context.push('/registries/actions'),
           ),
           NavCard(
             title: 'Animation types',

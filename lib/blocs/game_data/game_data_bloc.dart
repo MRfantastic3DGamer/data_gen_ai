@@ -3,6 +3,7 @@ import 'package:data_gen_ai/blocs/game_data/game_data_state.dart';
 import 'package:data_gen_ai/models/game_data_file_entry.dart';
 import 'package:data_gen_ai/repositories/project_repository.dart';
 import 'package:data_gen_ai/services/asset_index_service.dart';
+import 'package:data_gen_ai/services/game_data_defaults.dart';
 import 'package:data_gen_ai/services/registry_catalog_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -162,38 +163,6 @@ class GameDataBloc extends Bloc<GameDataEvent, GameDataState> {
   }
 
   Map<String, dynamic> _defaultPayloadFor(String typeKey) {
-    switch (typeKey) {
-      case 'ActionableSO':
-        return <String, dynamic>{
-          'providedBeliefAssets': <dynamic>[],
-          'action': 0,
-          'requiredBeliefAssets': <dynamic>[],
-          'ConstCost': 0,
-          'CostQuery': <String, dynamic>{'assetKey': ''},
-          'CostField': 0,
-          'CostFieldMultiplier': 0,
-          'ConstTime': 0,
-          'TimeQuery': <String, dynamic>{'assetKey': ''},
-          'TimeField': 0,
-          'TimeFieldMultiplier': 0,
-        };
-      case 'BeliefSO':
-        return <String, dynamic>{
-          'queryViewAsset': <String, dynamic>{'assetKey': ''},
-          'field': 0,
-          'condition': 0,
-          'isVectorValue': 0,
-          'isRangeValue': 0,
-          'intValue': 0,
-          'boolValue': 0,
-          'floatValue': 0,
-          'vectorValue': <String, dynamic>{'x': 0, 'y': 0, 'z': 0},
-          'rangeValue': <String, dynamic>{'x': 0, 'y': 0},
-          'useHysteresis': 0,
-          'hysteresisDelta': 0,
-        };
-      default:
-        return <String, dynamic>{};
-    }
+    return GameDataDefaults.payloadFor(typeKey);
   }
 }
