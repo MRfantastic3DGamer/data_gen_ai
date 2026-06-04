@@ -8,6 +8,7 @@ import 'package:data_gen_ai/core/theme/app_spacing.dart';
 import 'package:data_gen_ai/repositories/project_repository.dart';
 import 'package:data_gen_ai/services/data_folder_service.dart';
 import 'package:data_gen_ai/services/file_service.dart';
+import 'package:data_gen_ai/services/editor_preferences_service.dart';
 import 'package:data_gen_ai/services/game_data_backend_service.dart';
 import 'package:data_gen_ai/services/storage_permission_service.dart';
 import 'package:data_gen_ai/widgets/common/app_snackbar.dart';
@@ -126,7 +127,7 @@ class _DataFolderScreenState extends State<DataFolderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Data source')),
+      appBar: AppBar(title: const Text('Settings')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
@@ -275,8 +276,73 @@ class _DataFolderScreenState extends State<DataFolderScreen> {
                     ),
                   ),
                 ],
+                const SizedBox(height: AppSpacing.md),
+                SectionCard(
+                  title: 'Editor layout',
+                  subtitle: 'Applies to all field boxes and form spacing',
+                  child: _EditorLayoutSettings(
+                    preferences: context.read<EditorPreferencesService>(),
+                  ),
+                ),
               ],
             ),
+    );
+  }
+}
+
+class _EditorLayoutSettings extends StatefulWidget {
+  const _EditorLayoutSettings({required this.preferences});
+
+  final EditorPreferencesService preferences;
+
+  @override
+  State<_EditorLayoutSettings> createState() => _EditorLayoutSettingsState();
+}
+
+class _EditorLayoutSettingsState extends State<_EditorLayoutSettings> {
+  late double _fieldPadding;
+  late double _fieldGap;
+
+  @override
+  void initState() {
+    super.initState();
+    _fieldPadding = widget.preferences.fieldPadding;
+    _fieldGap = widget.preferences.fieldGap;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Text(
+          'Field box padding: ${_fieldPadding.round()} px',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        Slider(
+          min: EditorPreferencesService.minFieldPadding,
+          max: EditorPreferencesService.maxFieldPadding,
+          divisions: 8,
+          value: _fieldPadding,
+          label: _fieldPadding.round().toString(),
+          onChanged: (v) => setState(() => _fieldPadding = v),
+          onChangeEnd: widget.preferences.setFieldPadding,
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          'Space between fields: ${_fieldGap.round()} px',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        Slider(
+          min: EditorPreferencesService.minFieldGap,
+          max: EditorPreferencesService.maxFieldGap,
+          divisions: 10,
+          value: _fieldGap,
+          label: _fieldGap.round().toString(),
+          onChanged: (v) => setState(() => _fieldGap = v),
+          onChangeEnd: widget.preferences.setFieldGap,
+        ),
+      ],
     );
   }
 }

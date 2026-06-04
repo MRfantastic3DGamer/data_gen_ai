@@ -1,4 +1,4 @@
-import 'package:data_gen_ai/core/theme/app_spacing.dart';
+import 'package:data_gen_ai/core/theme/editor_preferences_scope.dart';
 import 'package:flutter/material.dart';
 
 class SectionCard extends StatelessWidget {
@@ -18,10 +18,11 @@ class SectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final fieldGap = context.editorFieldGap;
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: EdgeInsets.all(context.editorFieldPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -53,7 +54,7 @@ class SectionCard extends StatelessWidget {
                 if (trailing != null) trailing!,
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
+            SizedBox(height: fieldGap),
             child,
           ],
         ),

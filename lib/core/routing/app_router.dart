@@ -1,9 +1,6 @@
 import 'package:data_gen_ai/repositories/registry_repository.dart';
 import 'package:data_gen_ai/screens/actions/actions_hub_screen.dart';
 import 'package:data_gen_ai/screens/actions/so_detail_editor_screen.dart';
-import 'package:data_gen_ai/screens/browser/so_browser_screen.dart';
-import 'package:data_gen_ai/screens/character/character_editor_screen.dart';
-import 'package:data_gen_ai/screens/character/character_list_screen.dart';
 import 'package:data_gen_ai/screens/generic_editor/generic_editor_screen.dart';
 import 'package:data_gen_ai/screens/home/home_screen.dart';
 import 'package:data_gen_ai/screens/item/item_editor_screen.dart';
@@ -72,14 +69,6 @@ class AppRouter {
         ),
       ),
       GoRoute(
-        path: '/characters',
-        builder: (context, state) => const CharacterListScreen(),
-      ),
-      GoRoute(
-        path: '/characters/edit',
-        builder: (context, state) => const CharacterEditorScreen(),
-      ),
-      GoRoute(
         path: '/items',
         builder: (context, state) => const ItemListScreen(),
       ),
@@ -89,7 +78,7 @@ class AppRouter {
       ),
       GoRoute(
         path: '/browser',
-        builder: (context, state) => const SOBrowserScreen(),
+        redirect: (context, state) => '/actions',
       ),
       GoRoute(
         path: '/generic',

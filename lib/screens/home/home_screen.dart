@@ -1,4 +1,3 @@
-import 'package:data_gen_ai/core/constants.dart';
 import 'package:data_gen_ai/core/theme/app_spacing.dart';
 import 'package:data_gen_ai/widgets/common/nav_card.dart';
 import 'package:flutter/material.dart';
@@ -56,7 +55,7 @@ class HomeScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Text(
-                              AppConstants.appName,
+                              'GameData Editor',
                               style: Theme.of(context)
                                   .textTheme
                                   .headlineSmall
@@ -86,9 +85,10 @@ class HomeScreen extends StatelessWidget {
             sliver: SliverList(
               delegate: SliverChildListDelegate(<Widget>[
                 NavCard(
-                  title: 'Actions & Beliefs',
-                  subtitle: 'Search, filter, and edit exported JSON',
-                  icon: Icons.play_circle_outline_rounded,
+                  title: 'All Game Data',
+                  subtitle:
+                      'Folder tree of actions, beliefs, characters, catalog, and more',
+                  icon: Icons.account_tree_outlined,
                   iconColor: colorScheme.primary,
                   delayMs: 0,
                   onTap: () => context.push('/actions'),
@@ -102,26 +102,12 @@ class HomeScreen extends StatelessWidget {
                   onTap: () => context.push('/registries'),
                 ),
                 NavCard(
-                  title: 'Data source',
-                  subtitle: 'Firebase Realtime DB or local RAW folder',
-                  icon: Icons.cloud_sync_outlined,
+                  title: 'Settings',
+                  subtitle: 'Data source, editor padding, and storage',
+                  icon: Icons.settings_outlined,
                   iconColor: colorScheme.tertiary,
                   delayMs: 80,
                   onTap: () => context.push('/data-folder'),
-                ),
-                NavCard(
-                  title: 'Characters',
-                  subtitle: 'Character JSON assets',
-                  icon: Icons.people_alt_rounded,
-                  delayMs: 120,
-                  onTap: () => context.push('/characters'),
-                ),
-                NavCard(
-                  title: 'All JSON files',
-                  subtitle: 'Browse every exported file',
-                  icon: Icons.description_outlined,
-                  delayMs: 160,
-                  onTap: () => context.push('/browser'),
                 ),
                 const SizedBox(height: AppSpacing.xl),
               ]),

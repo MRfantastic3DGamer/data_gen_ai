@@ -3,6 +3,7 @@ import 'package:data_gen_ai/blocs/game_data/game_data_event.dart';
 import 'package:data_gen_ai/blocs/game_data/game_data_state.dart';
 import 'package:data_gen_ai/models/game_data_file_entry.dart';
 import 'package:data_gen_ai/repositories/project_repository.dart';
+import 'package:data_gen_ai/core/theme/editor_preferences_scope.dart';
 import 'package:data_gen_ai/widgets/common/json_preview_panel.dart';
 import 'package:data_gen_ai/widgets/editors/action_catalog_entry_editor_form.dart';
 import 'package:data_gen_ai/widgets/editors/action_catalog_registry_editor_form.dart';
@@ -193,7 +194,7 @@ class _SODetailEditorScreenState extends State<SODetailEditorScreen> {
           );
         }
         return ListView(
-          padding: const EdgeInsets.all(12),
+          padding: context.editorFormPadding,
           children: <Widget>[
             SectionCard(
               title: 'JSON payload (${entry.typeLabel})',

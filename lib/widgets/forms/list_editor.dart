@@ -1,3 +1,4 @@
+import 'package:data_gen_ai/core/theme/editor_preferences_scope.dart';
 import 'package:flutter/material.dart';
 
 class ListEditor extends StatelessWidget {
@@ -18,7 +19,7 @@ class ListEditor extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: context.editorFormPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[

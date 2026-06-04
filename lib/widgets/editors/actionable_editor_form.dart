@@ -8,6 +8,7 @@ import 'package:data_gen_ai/widgets/forms/asset_reference_list_editor.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:data_gen_ai/widgets/forms/utility_ai_result_field_dropdown.dart';
 import 'package:flutter/material.dart';
+import 'package:data_gen_ai/core/theme/editor_preferences_scope.dart';
 
 class ActionableEditorForm extends StatefulWidget {
   const ActionableEditorForm({
@@ -47,8 +48,7 @@ class _ActionableEditorFormState extends State<ActionableEditorForm> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(12),
+    return EditorFormList(
       children: <Widget>[
         SectionCard(
           title: 'Action',
@@ -78,7 +78,7 @@ class _ActionableEditorFormState extends State<ActionableEditorForm> {
         ),
         SectionCard(
           title: 'Cost',
-          child: Column(
+          child: EditorFieldGroup(
             children: <Widget>[
               FloatField(
                 label: 'Const cost',
@@ -106,7 +106,7 @@ class _ActionableEditorFormState extends State<ActionableEditorForm> {
         ),
         SectionCard(
           title: 'Time',
-          child: Column(
+          child: EditorFieldGroup(
             children: <Widget>[
               FloatField(
                 label: 'Const time',

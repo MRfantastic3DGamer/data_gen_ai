@@ -10,6 +10,7 @@ import 'package:data_gen_ai/widgets/forms/list_editor.dart';
 import 'package:data_gen_ai/widgets/forms/asset_reference_field.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:flutter/material.dart';
+import 'package:data_gen_ai/core/theme/editor_preferences_scope.dart';
 
 class BeliefSelectionEditorForm extends StatefulWidget {
   const BeliefSelectionEditorForm({
@@ -42,8 +43,7 @@ class _BeliefSelectionEditorFormState extends State<BeliefSelectionEditorForm> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(12),
+    return EditorFormList(
       children: <Widget>[
         SectionCard(
           title: 'Belief',
@@ -76,9 +76,9 @@ class _BeliefSelectionEditorFormState extends State<BeliefSelectionEditorForm> {
             return Card(
               margin: const EdgeInsets.only(bottom: 8),
               child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  children: <Widget>[
+                padding: EdgeInsets.all(context.editorFieldGap * 0.65),
+                child: EditorFieldGroup(
+            children: <Widget>[
                     Row(
                       children: <Widget>[
                         Expanded(

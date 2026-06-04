@@ -4,6 +4,7 @@ import 'package:data_gen_ai/widgets/editors/so_editor_utils.dart';
 import 'package:data_gen_ai/widgets/forms/consideration_function_config_editor.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:flutter/material.dart';
+import 'package:data_gen_ai/core/theme/editor_preferences_scope.dart';
 
 class ConsiderationFunctionEditorForm extends StatefulWidget {
   const ConsiderationFunctionEditorForm({
@@ -32,8 +33,7 @@ class _ConsiderationFunctionEditorFormState
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(12),
+    return EditorFormList(
       children: <Widget>[
         SectionCard(
           title: 'Function config',

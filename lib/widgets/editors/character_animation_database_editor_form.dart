@@ -10,6 +10,7 @@ import 'package:data_gen_ai/widgets/forms/asset_reference_field.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:data_gen_ai/core/theme/editor_preferences_scope.dart';
 
 class CharacterAnimationDatabaseEditorForm extends StatefulWidget {
   const CharacterAnimationDatabaseEditorForm({
@@ -44,12 +45,11 @@ class _CharacterAnimationDatabaseEditorFormState
   @override
   Widget build(BuildContext context) {
     final catalog = context.read<RegistryCatalogService>();
-    return ListView(
-      padding: const EdgeInsets.all(12),
+    return EditorFormList(
       children: <Widget>[
         SectionCard(
           title: 'Database',
-          child: Column(
+          child: EditorFieldGroup(
             children: <Widget>[
               FactionIdDropdown(
                 catalog: catalog,
@@ -88,9 +88,9 @@ class _CharacterAnimationDatabaseEditorFormState
             final row = _model.animations[index];
             return Card(
               child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  children: <Widget>[
+                padding: EdgeInsets.all(context.editorFieldGap * 0.65),
+                child: EditorFieldGroup(
+            children: <Widget>[
                     AnimationTypeIdDropdown(
                       catalog: catalog,
                       label: 'Animation type',

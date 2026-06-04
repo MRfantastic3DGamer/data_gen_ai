@@ -10,6 +10,7 @@ import 'package:data_gen_ai/widgets/forms/asset_reference_field.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:data_gen_ai/core/theme/editor_preferences_scope.dart';
 
 class MoveLibrarySOEditorForm extends StatefulWidget {
   const MoveLibrarySOEditorForm({
@@ -43,8 +44,7 @@ class _MoveLibrarySOEditorFormState extends State<MoveLibrarySOEditorForm> {
   @override
   Widget build(BuildContext context) {
     final catalog = context.read<RegistryCatalogService>();
-    return ListView(
-      padding: const EdgeInsets.all(12),
+    return EditorFormList(
       children: <Widget>[
         SectionCard(
           title: 'Default root motion settings',
@@ -79,9 +79,9 @@ class _MoveLibrarySOEditorFormState extends State<MoveLibrarySOEditorForm> {
             final move = _model.moves[index];
             return Card(
               child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  children: <Widget>[
+                padding: EdgeInsets.all(context.editorFieldGap * 0.65),
+                child: EditorFieldGroup(
+            children: <Widget>[
                     TextFormField(
                       initialValue: move.moveName,
                       decoration: const InputDecoration(labelText: 'Move name'),
