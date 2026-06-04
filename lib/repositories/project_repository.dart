@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:data_gen_ai/core/enums/game_data_backend.dart';
+import 'package:data_gen_ai/core/platform_support.dart';
 import 'package:data_gen_ai/core/game_data_path.dart';
 import 'package:data_gen_ai/core/so_type_registry.dart';
 import 'package:data_gen_ai/models/game_data_file_entry.dart';
@@ -210,7 +211,8 @@ class ProjectRepository {
 
   /// For local backend: absolute RAW root (meta file indexing).
   Future<String?> localRawRootPath() async {
-    if (_backendService.backend != GameDataBackend.localFiles) {
+    if (!supportsLocalRawFileIo ||
+        _backendService.backend != GameDataBackend.localFiles) {
       return null;
     }
     final root = await _fileService.getRawRootDirectory();

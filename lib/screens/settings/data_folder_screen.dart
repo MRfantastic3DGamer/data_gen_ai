@@ -3,7 +3,9 @@ import 'package:data_gen_ai/blocs/game_data/game_data_event.dart';
 import 'package:data_gen_ai/blocs/project/project_bloc.dart';
 import 'package:data_gen_ai/blocs/project/project_event.dart';
 import 'package:data_gen_ai/core/firebase_constants.dart';
+import 'package:data_gen_ai/core/platform_support.dart';
 import 'package:data_gen_ai/core/theme/app_spacing.dart';
+import 'package:data_gen_ai/core/theme/editor_preferences_scope.dart';
 import 'package:data_gen_ai/services/data_folder_service.dart';
 import 'package:data_gen_ai/services/file_service.dart';
 import 'package:data_gen_ai/services/editor_preferences_service.dart';
@@ -40,12 +42,12 @@ class _DataFolderScreenState extends State<DataFolderScreen> {
   }
 
   Future<void> _load() async {
-    final custom = await DataFolderService().getCustomRootPath();
-    final defaultRoot = await context.read<FileService>().getRawRootDirectory();
+    final fileService = context.read<FileService>();
     final access = await _permissions.hasStorageAccess();
+    final pathLabel = await fileService.rawRootPathLabel();
     if (!mounted) return;
     setState(() {
-      _currentPath = custom ?? defaultRoot.path;
+      _currentPath = pathLabel;
       _loading = false;
       _hasStorageAccess = access;
     });
@@ -262,17 +264,19 @@ class _DataFolderScreenState extends State<DataFolderScreen> {
                             _currentPath ?? '',
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
-                          const SizedBox(height: AppSpacing.md),
-                          FilledButton.icon(
-                            onPressed: _syncing ? null : _pickFolder,
-                            icon: const Icon(Icons.folder_open_rounded),
-                            label: const Text('Choose folder'),
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          OutlinedButton(
-                            onPressed: _syncing ? null : _useDefault,
-                            child: const Text('Use app documents default'),
-                          ),
+                          if (supportsLocalRawFileIo) ...<Widget>[
+                            const SizedBox(height: AppSpacing.md),
+                            FilledButton.icon(
+                              onPressed: _syncing ? null : _pickFolder,
+                              icon: const Icon(Icons.folder_open_rounded),
+                              label: const Text('Choose folder'),
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            OutlinedButton(
+                              onPressed: _syncing ? null : _useDefault,
+                              child: const Text('Use app documents default'),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -281,7 +285,7 @@ class _DataFolderScreenState extends State<DataFolderScreen> {
                       title: 'Editor layout',
                       subtitle: 'Applies to all field boxes and form spacing',
                       child: _EditorLayoutSettings(
-                        preferences: context.read<EditorPreferencesService>(),
+                        preferences: context.editorPreferences,
                       ),
                     ),
                   ],

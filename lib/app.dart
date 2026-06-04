@@ -71,9 +71,6 @@ class _GameDataEditorAppState extends State<GameDataEditorApp> {
         RepositoryProvider<GameDataBackendService>.value(
           value: widget.backendService,
         ),
-        RepositoryProvider<EditorPreferencesService>.value(
-          value: _editorPreferences,
-        ),
         RepositoryProvider<GameDataSyncService>.value(value: syncService),
         RepositoryProvider<FileService>.value(value: fileService),
         RepositoryProvider<AssetIndexService>(

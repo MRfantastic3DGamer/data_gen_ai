@@ -2,11 +2,17 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:data_gen_ai/core/constants.dart';
+import 'package:data_gen_ai/core/platform_support.dart';
 import 'package:data_gen_ai/services/data_folder_service.dart';
 import 'package:data_gen_ai/services/storage_permission_service.dart';
 import 'package:path_provider/path_provider.dart';
 
 class FileService {
+  /// Shown in Settings when local RAW I/O is unavailable (Flutter web).
+  static const String webDataLocationLabel =
+      'Local RAW folder is not available in the browser. '
+      'Run on Android or desktop, or use Firebase from a native build.';
+
   FileService({
     DataFolderService? dataFolderService,
     StoragePermissionService? storagePermissionService,
@@ -17,7 +23,18 @@ class FileService {
   final DataFolderService _dataFolderService;
   final StoragePermissionService _storagePermissionService;
 
+  /// Path label for UI (web-safe).
+  Future<String> rawRootPathLabel() async {
+    if (!supportsLocalRawFileIo) return webDataLocationLabel;
+    final custom = await _dataFolderService.getCustomRootPath();
+    if (custom != null && custom.isNotEmpty) return custom;
+    return (await getRawRootDirectory()).path;
+  }
+
   Future<Directory> getRawRootDirectory() async {
+    if (!supportsLocalRawFileIo) {
+      throw UnsupportedError(webDataLocationLabel);
+    }
     final custom = await _dataFolderService.getCustomRootPath();
     if (custom != null && custom.isNotEmpty) {
       await _ensureCanAccessExternalPath(custom);
@@ -37,7 +54,7 @@ class FileService {
   }
 
   Future<void> _ensureCanAccessExternalPath(String path) async {
-    if (!Platform.isAndroid) return;
+    if (!isAndroidDevice) return;
 
     final docs = await getApplicationDocumentsDirectory();
     if (path.startsWith(docs.path)) return;
@@ -54,6 +71,7 @@ class FileService {
   }
 
   Future<List<File>> listJsonFiles() async {
+    if (!supportsLocalRawFileIo) return <File>[];
     final root = await getRawRootDirectory();
     if (!await root.exists()) return <File>[];
 
@@ -67,6 +85,7 @@ class FileService {
   }
 
   Future<List<File>> listMetaFiles() async {
+    if (!supportsLocalRawFileIo) return <File>[];
     final root = await getRawRootDirectory();
     if (!await root.exists()) return <File>[];
 
@@ -80,14 +99,20 @@ class FileService {
   }
 
   Future<String> readFile(String path) async {
-    if (Platform.isAndroid) {
+    if (!supportsLocalRawFileIo) {
+      throw UnsupportedError(webDataLocationLabel);
+    }
+    if (isAndroidDevice) {
       await _ensureCanAccessExternalPath(File(path).parent.path);
     }
     return File(path).readAsString();
   }
 
   Future<void> writeFile(String path, String content) async {
-    if (Platform.isAndroid) {
+    if (!supportsLocalRawFileIo) {
+      throw UnsupportedError(webDataLocationLabel);
+    }
+    if (isAndroidDevice) {
       await _ensureCanAccessExternalPath(File(path).parent.path);
     }
     final file = File(path);
@@ -100,7 +125,10 @@ class FileService {
   }
 
   Future<void> deleteFile(String path) async {
-    if (Platform.isAndroid) {
+    if (!supportsLocalRawFileIo) {
+      throw UnsupportedError(webDataLocationLabel);
+    }
+    if (isAndroidDevice) {
       await _ensureCanAccessExternalPath(File(path).parent.path);
     }
     final file = File(path);
@@ -115,6 +143,7 @@ class FileService {
 
   /// Removes all files under the RAW root so a Firebase pull matches remote exactly.
   Future<void> clearRawRootDirectory() async {
+    if (!supportsLocalRawFileIo) return;
     final root = await getRawRootDirectory();
     if (!await root.exists()) {
       await root.create(recursive: true);

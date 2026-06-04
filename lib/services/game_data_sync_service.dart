@@ -1,3 +1,5 @@
+import 'package:data_gen_ai/core/platform_support.dart';
+import 'package:data_gen_ai/services/file_service.dart';
 import 'package:data_gen_ai/services/firebase_game_data_storage.dart';
 import 'package:data_gen_ai/services/local_game_data_storage.dart';
 
@@ -21,6 +23,9 @@ class GameDataSyncService {
   Future<GameDataSyncResult> pullFromFirebase({
     void Function(int current, int total, String key)? onProgress,
   }) async {
+    if (!supportsLocalRawFileIo) {
+      throw UnsupportedError(FileService.webDataLocationLabel);
+    }
     await _local.clearAllLocalFiles();
     final keys = await _firebase.listJsonKeys();
     final total = keys.length;
@@ -37,6 +42,9 @@ class GameDataSyncService {
   Future<GameDataSyncResult> pushToFirebase({
     void Function(int current, int total, String key)? onProgress,
   }) async {
+    if (!supportsLocalRawFileIo) {
+      throw UnsupportedError(FileService.webDataLocationLabel);
+    }
     final keys = await _local.listJsonKeys();
     final total = keys.length;
     var index = 0;
