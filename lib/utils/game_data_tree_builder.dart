@@ -5,7 +5,7 @@ import 'package:data_gen_ai/models/game_data_tree_node.dart';
 /// Builds folder trees from logical GameData JSON keys.
 abstract final class GameDataTreeBuilder {
   static List<GameDataTreeNode> fromEntries(List<GameDataFileEntry> entries) {
-    return fromPaths(
+    return fromPathEntries(
       entries
           .map(
             (e) => _PathEntry(
@@ -37,7 +37,7 @@ abstract final class GameDataTreeBuilder {
         _PathEntry(path: path, label: option.label, option: option),
       );
     }
-    return fromPaths(pathEntries);
+    return fromPathEntries(pathEntries);
   }
 
   static List<GameDataTreeNode> fromPaths(List<String> paths) {
