@@ -6,6 +6,8 @@ abstract class GameDataStorage {
 
   Future<void> writeContent(String key, String content);
 
+  Future<void> deleteContent(String key);
+
   /// Human-readable location for UI (folder path or Firebase label).
   Future<String> displayLocation();
 }

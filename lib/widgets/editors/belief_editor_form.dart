@@ -12,6 +12,7 @@ import 'package:data_gen_ai/widgets/forms/vector2_field.dart';
 import 'package:data_gen_ai/widgets/forms/vector3_field.dart';
 import 'package:data_gen_ai/widgets/editors/editor_list_view.dart';
 import 'package:flutter/material.dart';
+import 'package:data_gen_ai/core/theme/editor_preferences_scope.dart';
 
 class BeliefEditorForm extends StatefulWidget {
   const BeliefEditorForm({
@@ -51,8 +52,7 @@ class _BeliefEditorFormState extends State<BeliefEditorForm> {
 
   @override
   Widget build(BuildContext context) {
-    return EditorListView(
-      padding: const EdgeInsets.all(12),
+    return EditorFormList(
       children: <Widget>[
         SectionCard(
           title: 'Query',
@@ -80,7 +80,7 @@ class _BeliefEditorFormState extends State<BeliefEditorForm> {
         ),
         SectionCard(
           title: 'Condition',
-          child: Column(
+          child: EditorFieldGroup(
             children: <Widget>[
               UtilityAIResultFieldDropdown(
                 label: 'Result field',
@@ -107,7 +107,7 @@ class _BeliefEditorFormState extends State<BeliefEditorForm> {
         ),
         SectionCard(
           title: 'Target value',
-          child: Column(
+          child: EditorFieldGroup(
             children: <Widget>[
               IntField(
                 label: 'Int value',
@@ -141,7 +141,7 @@ class _BeliefEditorFormState extends State<BeliefEditorForm> {
         ),
         SectionCard(
           title: 'Hysteresis',
-          child: Column(
+          child: EditorFieldGroup(
             children: <Widget>[
               BoolToggle(
                 label: 'Use hysteresis',

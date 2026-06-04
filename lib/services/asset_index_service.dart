@@ -164,6 +164,19 @@ class AssetIndexService {
   }
 
   AssetPickerOption? optionForReference(UnityReference ref) {
+    if (ref.assetKey.isNotEmpty) {
+      for (final o in _allOptions) {
+        if (o.path == ref.assetKey) return o;
+      }
+      return AssetPickerOption(
+        guid: '',
+        fileId: 0,
+        label: ref.displayName.isNotEmpty ? ref.displayName : ref.label,
+        subtitle: ref.assetKey,
+        typeKey: '',
+        path: ref.assetKey,
+      );
+    }
     if (ref.guid.isNotEmpty) {
       return _byGuid[ref.guid.toLowerCase()];
     }
@@ -182,10 +195,61 @@ class AssetIndexService {
   }
 
   UnityReference resolveReference(UnityReference current, AssetPickerOption picked) {
+    if (picked.path != null && picked.path!.isNotEmpty) {
+      return UnityReference(assetKey: picked.path!, displayName: picked.label);
+    }
     if (picked.guid.isEmpty) {
       return UnityReference.empty();
     }
     return picked.toReference();
+  }
+
+  /// Converts legacy GUID refs in a payload tree to assetKey refs when possible.
+  Map<String, dynamic> normalizePayloadReferences(Map<String, dynamic> payload) {
+    final next = <String, dynamic>{};
+    for (final entry in payload.entries) {
+      next[entry.key] = _normalizeValue(entry.value);
+    }
+    return next;
+  }
+
+  dynamic _normalizeValue(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      if (_looksLikeReference(value)) {
+        return normalizeReference(UnityReference.fromJson(value)).toJson();
+      }
+      final child = <String, dynamic>{};
+      for (final entry in value.entries) {
+        child[entry.key] = _normalizeValue(entry.value);
+      }
+      return child;
+    }
+    if (value is List) {
+      return value.map(_normalizeValue).toList();
+    }
+    return value;
+  }
+
+  bool _looksLikeReference(Map<String, dynamic> json) {
+    if (json.containsKey('assetKey')) return true;
+    if (!json.containsKey('fileID') && !json.containsKey('guid')) {
+      return false;
+    }
+    return !json.containsKey('x') && !json.containsKey('y');
+  }
+
+  UnityReference normalizeReference(UnityReference ref) {
+    if (ref.assetKey.isNotEmpty) return ref;
+    if (ref.guid.isNotEmpty) {
+      final option = _byGuid[ref.guid.toLowerCase()];
+      if (option?.path != null) {
+        return UnityReference(
+          assetKey: option!.path!,
+          displayName: option.label,
+        );
+      }
+    }
+    return ref;
   }
 
   String _stem(String fileName) =>

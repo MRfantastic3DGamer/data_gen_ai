@@ -6,6 +6,7 @@ import 'package:data_gen_ai/models/game_data_file_entry.dart';
 import 'package:data_gen_ai/models/so_edit_route_args.dart';
 import 'package:data_gen_ai/models/unity_envelope.dart';
 import 'package:data_gen_ai/repositories/project_repository.dart';
+import 'package:data_gen_ai/core/theme/editor_preferences_scope.dart';
 import 'package:data_gen_ai/services/game_data_defaults.dart';
 import 'package:data_gen_ai/services/registry_catalog_service.dart';
 import 'package:data_gen_ai/utils/game_data_key_builder.dart';
@@ -436,12 +437,17 @@ class _SODetailEditorScreenState extends State<SODetailEditorScreen> {
             onChanged: _onChanged,
           );
         }
-        return SectionCard(
-          title: 'JSON payload (${entry.typeLabel})',
-          child: SizedBox(
-            height: 500,
-            child: JsonPreviewPanel(json: entry.payload),
-          ),
+        return ListView(
+          padding: context.editorFormPadding,
+          children: <Widget>[
+            SectionCard(
+              title: 'JSON payload (${entry.typeLabel})',
+              child: SizedBox(
+                height: 500,
+                child: JsonPreviewPanel(json: entry.payload),
+              ),
+            ),
+          ],
         );
     }
   }

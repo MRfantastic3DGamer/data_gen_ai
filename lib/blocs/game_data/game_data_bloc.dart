@@ -18,6 +18,7 @@ class GameDataBloc extends Bloc<GameDataEvent, GameDataState> {
     on<GameDataCategoryFilterChanged>(_onCategoryChanged);
     on<GameDataTypeFilterChanged>(_onTypeChanged);
     on<GameDataEntryUpdated>(_onEntryUpdated);
+    on<GameDataDeleteRequested>(_onDelete);
     on<GameDataCommitRequested>(_onCommit);
     on<GameDataCreateRequested>(_onCreate);
     on<GameDataReloadRequested>(_onStarted);
@@ -36,7 +37,14 @@ class GameDataBloc extends Bloc<GameDataEvent, GameDataState> {
       await _registryCatalog.reload(_repository);
       final entries = await _repository.loadAllEntries();
       await _assetIndex.rebuild(entries);
-      emit(state.copyWith(loading: false, entries: entries));
+      final normalized = entries
+          .map(
+            (e) => e.copyWith(
+              payload: _assetIndex.normalizePayloadReferences(e.payload),
+            ),
+          )
+          .toList();
+      emit(state.copyWith(loading: false, entries: normalized));
     } catch (e) {
       emit(state.copyWith(loading: false, error: e.toString()));
     }
@@ -77,27 +85,50 @@ class GameDataBloc extends Bloc<GameDataEvent, GameDataState> {
     emit(state.copyWith(entries: updated, clearSavedMessage: true));
   }
 
+  void _onDelete(
+    GameDataDeleteRequested event,
+    Emitter<GameDataState> emit,
+  ) {
+    final path = event.path;
+    final updatedEntries =
+        state.entries.where((e) => e.path != path).toList();
+    final pending = Set<String>.from(state.pendingDeletes)..add(path);
+    emit(
+      state.copyWith(
+        entries: updatedEntries,
+        pendingDeletes: pending,
+        clearSavedMessage: true,
+      ),
+    );
+  }
+
   Future<void> _onCommit(
     GameDataCommitRequested event,
     Emitter<GameDataState> emit,
   ) async {
     final dirty = state.entries.where((e) => e.isDirty).toList();
-    if (dirty.isEmpty) {
+    final deletes = state.pendingDeletes;
+    if (dirty.isEmpty && deletes.isEmpty) {
       emit(state.copyWith(savedMessage: 'No pending changes to commit.'));
       return;
     }
 
     emit(state.copyWith(committing: true, clearError: true));
     try {
-      final count = await _repository.commitAll(dirty);
+      final count = await _repository.commitAll(
+        dirty,
+        deletedKeys: deletes,
+      );
       await _registryCatalog.reload(_repository);
       final refreshed = await _repository.loadAllEntries();
+      await _assetIndex.rebuild(refreshed);
       emit(
         state.copyWith(
           committing: false,
           entries: refreshed,
+          pendingDeletes: const <String>{},
           lastCommitCount: count,
-          savedMessage: 'Committed $count file(s) to JSON.',
+          savedMessage: 'Committed $count change(s) to storage.',
         ),
       );
     } catch (e) {
@@ -119,6 +150,7 @@ class GameDataBloc extends Bloc<GameDataEvent, GameDataState> {
       final entry = await _repository.loadEntry(path);
       await _registryCatalog.reload(_repository);
       final entries = await _repository.loadAllEntries();
+      await _assetIndex.rebuild(entries);
       emit(
         state.copyWith(
           entries: entries,

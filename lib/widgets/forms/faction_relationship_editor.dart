@@ -4,6 +4,7 @@ import 'package:data_gen_ai/services/registry_catalog_service.dart';
 import 'package:data_gen_ai/widgets/forms/faction_id_dropdown.dart';
 import 'package:data_gen_ai/widgets/forms/searchable_enum_dropdown.dart';
 import 'package:flutter/material.dart';
+import 'package:data_gen_ai/core/theme/editor_preferences_scope.dart';
 
 class FactionRelationshipEditor extends StatelessWidget {
   const FactionRelationshipEditor({
@@ -24,7 +25,7 @@ class FactionRelationshipEditor extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.all(context.editorFieldGap * 0.65),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[

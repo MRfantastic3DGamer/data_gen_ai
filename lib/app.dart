@@ -9,10 +9,12 @@ import 'package:data_gen_ai/blocs/project/project_event.dart';
 import 'package:data_gen_ai/core/constants.dart';
 import 'package:data_gen_ai/core/routing/app_router.dart';
 import 'package:data_gen_ai/core/theme/app_theme.dart';
+import 'package:data_gen_ai/core/theme/editor_preferences_scope.dart';
 import 'package:data_gen_ai/repositories/ai_repository.dart';
 import 'package:data_gen_ai/repositories/project_repository.dart';
 import 'package:data_gen_ai/repositories/registry_repository.dart';
 import 'package:data_gen_ai/services/asset_index_service.dart';
+import 'package:data_gen_ai/services/editor_preferences_service.dart';
 import 'package:data_gen_ai/services/file_service.dart';
 import 'package:data_gen_ai/services/game_data_backend_service.dart';
 import 'package:data_gen_ai/services/game_data_sync_service.dart';
@@ -22,17 +24,37 @@ import 'package:data_gen_ai/services/registry_catalog_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class GameDataEditorApp extends StatelessWidget {
+class GameDataEditorApp extends StatefulWidget {
   const GameDataEditorApp({super.key, required this.backendService});
 
   final GameDataBackendService backendService;
+
+  @override
+  State<GameDataEditorApp> createState() => _GameDataEditorAppState();
+}
+
+class _GameDataEditorAppState extends State<GameDataEditorApp> {
+  late final EditorPreferencesService _editorPreferences;
+
+  @override
+  void initState() {
+    super.initState();
+    _editorPreferences = EditorPreferencesService();
+    _editorPreferences.load();
+  }
+
+  @override
+  void dispose() {
+    _editorPreferences.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final fileService = FileService();
     final jsonConverter = JsonConverterService();
     final projectRepository = ProjectRepository(
-      backendService: backendService,
+      backendService: widget.backendService,
       jsonConverter: jsonConverter,
       fileService: fileService,
     );
@@ -40,14 +62,17 @@ class GameDataEditorApp extends StatelessWidget {
     final registryRepository = RegistryRepository(projectRepository);
     final aiRepository = AIRepository(GemmaService());
     final syncService = GameDataSyncService(
-      firebaseStorage: backendService.firebaseStorage,
-      localStorage: backendService.localStorage,
+      firebaseStorage: widget.backendService.firebaseStorage,
+      localStorage: widget.backendService.localStorage,
     );
 
     return MultiRepositoryProvider(
       providers: <RepositoryProvider<dynamic>>[
         RepositoryProvider<GameDataBackendService>.value(
-          value: backendService,
+          value: widget.backendService,
+        ),
+        RepositoryProvider<EditorPreferencesService>.value(
+          value: _editorPreferences,
         ),
         RepositoryProvider<GameDataSyncService>.value(value: syncService),
         RepositoryProvider<FileService>.value(value: fileService),
@@ -93,12 +118,27 @@ class GameDataEditorApp extends StatelessWidget {
             create: (_) => AIAssistantBloc(aiRepository),
           ),
         ],
-        child: MaterialApp.router(
-          title: AppConstants.appName,
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          themeMode: ThemeMode.system,
-          routerConfig: AppRouter.router,
+        child: EditorPreferencesScope(
+          preferences: _editorPreferences,
+          child: ListenableBuilder(
+            listenable: _editorPreferences,
+            builder: (context, _) {
+              final fieldPadding = _editorPreferences.fieldBoxPadding;
+              return MaterialApp.router(
+                title: AppConstants.appName,
+                theme: AppTheme.applyEditorPreferences(
+                  AppTheme.light,
+                  fieldPadding,
+                ),
+                darkTheme: AppTheme.applyEditorPreferences(
+                  AppTheme.dark,
+                  fieldPadding,
+                ),
+                themeMode: ThemeMode.system,
+                routerConfig: AppRouter.router,
+              );
+            },
+          ),
         ),
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:data_gen_ai/blocs/generic_so/generic_so_bloc.dart';
 import 'package:data_gen_ai/blocs/generic_so/generic_so_event.dart';
 import 'package:data_gen_ai/blocs/generic_so/generic_so_state.dart';
+import 'package:data_gen_ai/core/theme/editor_preferences_scope.dart';
 import 'package:data_gen_ai/widgets/common/json_preview_panel.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:flutter/material.dart';
@@ -34,7 +35,7 @@ class _GenericEditorScreenState extends State<GenericEditorScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           return ListView(
-            padding: const EdgeInsets.all(12),
+            padding: context.editorFormPadding,
             children: <Widget>[
               SectionCard(
                 title: 'Raw Payload JSON',

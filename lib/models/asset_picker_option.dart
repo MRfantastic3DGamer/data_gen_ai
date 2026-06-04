@@ -23,11 +23,15 @@ class AssetPickerOption {
 
   bool get hasGuid => guid.isNotEmpty;
 
-  UnityReference toReference() => UnityReference(
-    guid: guid,
-    fileId: fileId,
-    type: 2,
-  );
+  UnityReference toReference() {
+    if (path != null && path!.isNotEmpty) {
+      return UnityReference(assetKey: path!, displayName: label);
+    }
+    return UnityReference(
+      guid: guid,
+      fileId: fileId,
+    );
+  }
 
   static const empty = AssetPickerOption(
     guid: '',

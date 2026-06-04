@@ -79,6 +79,18 @@ abstract final class AppTheme {
     return _applyTypography(base);
   }
 
+  static ThemeData applyEditorPreferences(
+    ThemeData theme,
+    EdgeInsets fieldBoxPadding,
+  ) {
+    return theme.copyWith(
+      inputDecorationTheme: theme.inputDecorationTheme.copyWith(
+        contentPadding: fieldBoxPadding,
+        isDense: false,
+      ),
+    );
+  }
+
   static ThemeData _applyTypography(ThemeData theme) {
     final textTheme = GoogleFonts.interTextTheme(theme.textTheme);
     return theme.copyWith(

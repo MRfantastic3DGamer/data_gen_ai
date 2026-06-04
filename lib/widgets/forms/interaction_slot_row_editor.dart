@@ -5,6 +5,7 @@ import 'package:data_gen_ai/widgets/forms/enum_dropdown.dart';
 import 'package:data_gen_ai/widgets/forms/quaternion_field.dart';
 import 'package:data_gen_ai/widgets/forms/vector3_field.dart';
 import 'package:flutter/material.dart';
+import 'package:data_gen_ai/core/theme/editor_preferences_scope.dart';
 
 class InteractionSlotRowEditor extends StatelessWidget {
   const InteractionSlotRowEditor({
@@ -23,7 +24,7 @@ class InteractionSlotRowEditor extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.all(context.editorFieldGap * 0.65),
         child: Column(
           children: <Widget>[
             Row(

@@ -99,6 +99,20 @@ class FileService {
     await writeFile(path, const JsonEncoder.withIndent('  ').convert(json));
   }
 
+  Future<void> deleteFile(String path) async {
+    if (Platform.isAndroid) {
+      await _ensureCanAccessExternalPath(File(path).parent.path);
+    }
+    final file = File(path);
+    if (await file.exists()) {
+      await file.delete();
+    }
+    final meta = File('$path.meta');
+    if (await meta.exists()) {
+      await meta.delete();
+    }
+  }
+
   /// Removes all files under the RAW root so a Firebase pull matches remote exactly.
   Future<void> clearRawRootDirectory() async {
     final root = await getRawRootDirectory();

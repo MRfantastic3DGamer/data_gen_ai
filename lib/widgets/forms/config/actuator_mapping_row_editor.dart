@@ -16,6 +16,7 @@ import 'package:data_gen_ai/widgets/forms/enum_dropdown.dart';
 import 'package:data_gen_ai/widgets/forms/asset_reference_field.dart';
 import 'package:data_gen_ai/widgets/forms/utility_ai_result_field_dropdown.dart';
 import 'package:flutter/material.dart';
+import 'package:data_gen_ai/core/theme/editor_preferences_scope.dart';
 
 class ActuatorMappingRowEditor extends StatelessWidget {
   const ActuatorMappingRowEditor({
@@ -66,7 +67,7 @@ class ActuatorMappingRowEditor extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.all(context.editorFieldGap * 0.65),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[

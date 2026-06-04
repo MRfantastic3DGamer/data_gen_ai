@@ -4,6 +4,7 @@ import 'package:data_gen_ai/widgets/editors/so_editor_utils.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:data_gen_ai/widgets/editors/editor_list_view.dart';
 import 'package:flutter/material.dart';
+import 'package:data_gen_ai/core/theme/editor_preferences_scope.dart';
 
 class ActionCatalogRegistryEditorForm extends StatefulWidget {
   const ActionCatalogRegistryEditorForm({
@@ -32,8 +33,7 @@ class _ActionCatalogRegistryEditorFormState
 
   @override
   Widget build(BuildContext context) {
-    return EditorListView(
-      padding: const EdgeInsets.all(12),
+    return EditorFormList(
       children: <Widget>[
         SectionCard(
           title: 'Registry',

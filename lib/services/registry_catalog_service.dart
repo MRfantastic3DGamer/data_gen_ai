@@ -119,7 +119,9 @@ class RegistryCatalogService {
 
     for (final entry in entries) {
       _scanRefs(entry.payload, (ref) {
-        final matched = _fileForTypesGuid(ref.guid);
+        final matched = ref.assetKey.isNotEmpty
+            ? _fileForTypesAssetKey(ref.assetKey)
+            : _fileForTypesGuid(ref.guid);
         if (matched != null && ref.guid.isNotEmpty) {
           typesByGuid[ref.guid] = matched;
         }
@@ -134,10 +136,12 @@ class RegistryCatalogService {
     );
 
     var matched = typesRef.guid.isNotEmpty ? typesByGuid[typesRef.guid] : null;
+    matched ??= _fileForTypesAssetKey(typesRef.assetKey);
     matched ??= _matchTypesFileForDatabase(entry, faction);
     if (matched == null && animationTypesFiles.length == 1) {
       matched = animationTypesFiles.first;
     }
+    matched ??= _matchTypesFileForFaction(faction);
     if (matched == null) return;
 
     final index = animationTypesFiles.indexWhere((f) => f.path == matched!.path);
@@ -187,12 +191,21 @@ class RegistryCatalogService {
     return typesByGuid[guid];
   }
 
+  AnimationTypesConfigFile? _fileForTypesAssetKey(String assetKey) {
+    if (assetKey.isEmpty) return null;
+    for (final file in animationTypesFiles) {
+      if (file.path == assetKey) return file;
+    }
+    return null;
+  }
+
   void _scanRefs(
     Object? node,
     void Function(UnityReference ref) onRef,
   ) {
     if (node is Map<String, dynamic>) {
-      if (node.containsKey('guid') && node.containsKey('fileID')) {
+      if (node.containsKey('assetKey') ||
+          (node.containsKey('guid') && node.containsKey('fileID'))) {
         onRef(UnityReference.fromJson(node));
       }
       for (final value in node.values) {

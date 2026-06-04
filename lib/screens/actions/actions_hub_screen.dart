@@ -7,6 +7,8 @@ import 'package:data_gen_ai/core/theme/app_spacing.dart';
 import 'package:data_gen_ai/models/game_data_file_entry.dart';
 import 'package:data_gen_ai/widgets/common/app_snackbar.dart';
 import 'package:data_gen_ai/widgets/common/empty_state.dart';
+import 'package:data_gen_ai/utils/game_data_tree_builder.dart';
+import 'package:data_gen_ai/widgets/common/game_data_folder_tree_view.dart';
 import 'package:data_gen_ai/widgets/common/game_data_list_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -38,7 +40,7 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Actions & GameData'),
+        title: const Text('All Game Data'),
         actions: <Widget>[
           IconButton(
             tooltip: 'Reload JSON',
@@ -247,57 +249,80 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
       );
     }
 
-    final grouped = <String, List<GameDataFileEntry>>{};
-    for (final entry in entries) {
-      grouped.putIfAbsent(entry.category, () => <GameDataFileEntry>[]).add(entry);
-    }
-    final categories = grouped.keys.toList()..sort();
+    final roots = GameDataTreeBuilder.fromEntries(entries);
 
-    return ListView(
-      padding: const EdgeInsets.only(bottom: 88),
-      children: <Widget>[
-        for (final category in categories)
-          ExpansionTile(
-            initiallyExpanded: true,
-            title: Text(
-              category,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+    return GameDataFolderTreeView(
+      roots: roots,
+      initiallyExpandAll: state.searchQuery.trim().isNotEmpty,
+      onFileTap: (node) {
+        final path = node.path;
+        if (path != null) {
+          context.push('/so-edit', extra: path);
+        }
+      },
+      fileBuilder: (context, node) {
+        final entry = node.entry;
+        if (entry == null) return const SizedBox.shrink();
+        return Dismissible(
+          key: ValueKey<String>(entry.path),
+          direction: DismissDirection.endToStart,
+          background: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: AppSpacing.lg),
+            color: Theme.of(context).colorScheme.errorContainer,
+            child: Icon(
+              Icons.delete_outline,
+              color: Theme.of(context).colorScheme.onErrorContainer,
             ),
-            subtitle: Text('${grouped[category]!.length} file(s)'),
-            children: grouped[category]!
-                .map((entry) => _entryTile(context, entry))
-                .toList(),
           ),
-      ],
-    );
-  }
-
-  Widget _entryTile(BuildContext context, GameDataFileEntry entry) {
-    final fileLabel = entry.path.split('/').last;
-    final title = fileLabel.endsWith('.json')
-        ? fileLabel.substring(0, fileLabel.length - 5)
-        : fileLabel;
-    return GameDataListTile(
-      title: title,
-      subtitle: entry.category,
-      typeLabel: entry.typeLabel,
-      filePath: entry.path,
-      isDirty: entry.isDirty,
-      onTap: () => context.push('/so-edit', extra: entry.path),
+          confirmDismiss: (_) async {
+            return await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Delete asset?'),
+                    content: Text(
+                      'Remove "${entry.displayName}" from storage on commit?\n\n${entry.path}',
+                    ),
+                    actions: <Widget>[
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Cancel'),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: const Text('Delete'),
+                      ),
+                    ],
+                  ),
+                ) ??
+                false;
+          },
+          onDismissed: (_) {
+            context.read<GameDataBloc>().add(
+              GameDataDeleteRequested(entry.path),
+            );
+            AppSnackBar.showSuccess(
+              context,
+              'Marked for deletion — commit to remove from storage.',
+            );
+          },
+          child: GameDataListTile(
+            title: entry.displayName,
+            subtitle: entry.path,
+            typeLabel: entry.typeLabel,
+            isDirty: entry.isDirty,
+            onTap: () => context.push('/so-edit', extra: entry.path),
+          ),
+        );
+      },
     );
   }
 
   Future<void> _showCreateSheet(BuildContext context) async {
-    final actionTypes = SOTypeRegistry.all
-        .where(
-          (t) =>
-              (t.category == 'Actions' || t.category == 'Queries') &&
-              t.key != 'ConsiderationFunctionSO',
-        )
-        .toList();
-    SOTypeInfo? selected = actionTypes.first;
+    final createTypes = SOTypeRegistry.all;
+    SOTypeInfo? selected = createTypes.first;
     final folderController = TextEditingController(
-      text: actionTypes.first.subfolder,
+      text: createTypes.first.subfolder,
     );
     final nameController = TextEditingController();
 
@@ -327,7 +352,7 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
               DropdownButtonFormField<SOTypeInfo>(
                 value: selected,
                 decoration: const InputDecoration(labelText: 'Type'),
-                items: actionTypes
+                items: createTypes
                     .map(
                       (t) => DropdownMenuItem<SOTypeInfo>(
                         value: t,
