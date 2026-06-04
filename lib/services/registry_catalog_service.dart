@@ -1,4 +1,5 @@
 import 'package:data_gen_ai/models/action_catalog_entry_so.dart';
+import 'package:data_gen_ai/models/action_catalog_registry.dart';
 import 'package:data_gen_ai/models/animation_types_config_model.dart';
 import 'package:data_gen_ai/models/armature_types_config_model.dart';
 import 'package:data_gen_ai/models/factions_config_model.dart';
@@ -19,6 +20,7 @@ class RegistryCatalogService {
       <ArmatureTypesConfigFile>[];
   final List<ActionCatalogEntryFile> actionCatalogEntries =
       <ActionCatalogEntryFile>[];
+  ActionCatalogRegistryFile? actionCatalogRegistry;
 
   final Map<int, AnimationTypesConfigFile> factionToTypesFile =
       <int, AnimationTypesConfigFile>{};
@@ -34,7 +36,8 @@ class RegistryCatalogService {
   bool get isLoaded =>
       factionsFile != null ||
       animationTypesFiles.isNotEmpty ||
-      actionCatalogEntries.isNotEmpty;
+      actionCatalogEntries.isNotEmpty ||
+      actionCatalogRegistry != null;
 
   Future<void> reload(ProjectRepository repository) async {
     factionsFile = null;
@@ -42,6 +45,7 @@ class RegistryCatalogService {
     animationTypesFiles.clear();
     armatureTypesFiles.clear();
     actionCatalogEntries.clear();
+    actionCatalogRegistry = null;
     factionToTypesFile.clear();
     typesByGuid.clear();
     typesByPathStem.clear();
@@ -81,6 +85,13 @@ class RegistryCatalogService {
             envelope: entry.envelope,
             model: ArmatureTypesConfigModel.fromJson(entry.payload),
           ),
+        );
+      } else if (id.contains('ActionCatalogRegistry')) {
+        actionCatalogRegistry = ActionCatalogRegistryFile(
+          path: entry.path,
+          displayName: entry.displayName,
+          envelope: entry.envelope,
+          model: ActionCatalogRegistryModel.fromJson(entry.payload),
         );
       } else if (id.contains('ActionCatalogEntrySO')) {
         final model = ActionCatalogEntrySOModel.fromJson(entry.payload);
@@ -334,6 +345,30 @@ class WorkTypesConfigFile {
   final String path;
   final UnityEnvelope envelope;
   final WorkTypesConfigModel model;
+}
+
+class ActionCatalogRegistryFile {
+  const ActionCatalogRegistryFile({
+    required this.path,
+    required this.displayName,
+    required this.envelope,
+    required this.model,
+  });
+
+  final String path;
+  final String displayName;
+  final UnityEnvelope envelope;
+  final ActionCatalogRegistryModel model;
+
+  /// Unity catalog root, or the registry file folder when export left it empty.
+  String effectiveCatalogRoot() {
+    if (model.catalogRoot.trim().isNotEmpty) {
+      return model.catalogRoot.replaceAll('\\', '/').trim();
+    }
+    final segments = path.replaceAll('\\', '/').split('/');
+    if (segments.length <= 1) return '';
+    return segments.sublist(0, segments.length - 1).join('/');
+  }
 }
 
 class ActionCatalogEntryFile {

@@ -1,3 +1,5 @@
+import 'package:data_gen_ai/utils/unity_json_fields.dart';
+
 class ActionCatalogRegistryModel {
   const ActionCatalogRegistryModel({this.catalogRoot = ''});
 
@@ -5,7 +7,7 @@ class ActionCatalogRegistryModel {
 
   factory ActionCatalogRegistryModel.fromJson(Map<String, dynamic> json) =>
       ActionCatalogRegistryModel(
-        catalogRoot: (json['catalogRoot'] ?? '') as String,
+        catalogRoot: UnityJsonFields.asString(json['catalogRoot']),
       );
 
   Map<String, dynamic> toJson() => <String, dynamic>{'catalogRoot': catalogRoot};

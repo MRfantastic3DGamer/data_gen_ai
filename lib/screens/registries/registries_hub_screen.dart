@@ -14,6 +14,7 @@ class RegistriesHubScreen extends StatelessWidget {
     final factionCount = catalog.factionsFile?.model.factions.length ?? 0;
     final animConfigCount = catalog.animationTypesFiles.length;
     final actionCount = catalog.actionCatalogEntries.length;
+    final hasCatalogRegistry = catalog.actionCatalogRegistry != null;
     final workTypeCount = catalog.workTypesFile?.model.types.length ?? 0;
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -41,9 +42,12 @@ class RegistriesHubScreen extends StatelessWidget {
           ),
           NavCard(
             title: 'Action catalog',
-            subtitle: actionCount == 0
-                ? 'No ActionCatalogEntrySO JSON found'
-                : '$actionCount catalog entry(ies) · action ids for actionables',
+            subtitle: actionCount == 0 && !hasCatalogRegistry
+                ? 'No action catalog JSON found under actionable/'
+                : [
+                    if (hasCatalogRegistry) 'registry loaded',
+                    if (actionCount > 0) '$actionCount nested entr${actionCount == 1 ? 'y' : 'ies'}',
+                  ].join(' · '),
             icon: Icons.playlist_play_rounded,
             iconColor: colorScheme.primary,
             delayMs: 30,

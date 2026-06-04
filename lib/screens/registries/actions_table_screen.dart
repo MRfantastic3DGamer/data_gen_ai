@@ -1,8 +1,13 @@
 import 'package:data_gen_ai/blocs/game_data/game_data_bloc.dart';
 import 'package:data_gen_ai/blocs/game_data/game_data_event.dart';
+import 'package:data_gen_ai/core/theme/app_spacing.dart';
 import 'package:data_gen_ai/models/action_catalog_entry_so.dart';
+import 'package:data_gen_ai/models/game_data_tree_node.dart';
 import 'package:data_gen_ai/repositories/project_repository.dart';
 import 'package:data_gen_ai/services/registry_catalog_service.dart';
+import 'package:data_gen_ai/utils/action_catalog_paths.dart';
+import 'package:data_gen_ai/utils/game_data_tree_builder.dart';
+import 'package:data_gen_ai/widgets/common/game_data_folder_tree_view.dart';
 import 'package:data_gen_ai/widgets/forms/animation_type_id_dropdown.dart';
 import 'package:data_gen_ai/widgets/forms/int_field.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
@@ -20,7 +25,11 @@ class ActionsTableScreen extends StatefulWidget {
 }
 
 class _ActionsTableScreenState extends State<ActionsTableScreen> {
-  List<ActionCatalogEntryFile> _entries = <ActionCatalogEntryFile>[];
+  final Map<String, ActionCatalogEntryFile> _filesByPath =
+      <String, ActionCatalogEntryFile>{};
+  List<GameDataTreeNode> _treeRoots = <GameDataTreeNode>[];
+  ActionCatalogRegistryFile? _registry;
+  ActionCatalogEntryFile? _selected;
   var _savingPath = '';
 
   @override
@@ -30,19 +39,32 @@ class _ActionsTableScreenState extends State<ActionsTableScreen> {
   }
 
   void _reloadFromCatalog() {
+    _filesByPath.clear();
+    for (final file in widget.catalog.actionCatalogEntries) {
+      _filesByPath[file.path] = file;
+    }
+    _registry = widget.catalog.actionCatalogRegistry;
+
+    final treePaths = _filesByPath.keys.toList();
+    if (_registry != null) {
+      treePaths.add(_registry!.path);
+    }
+    treePaths.sort();
+
     setState(() {
-      _entries = List<ActionCatalogEntryFile>.from(
-        widget.catalog.actionCatalogEntries,
-      );
+      _treeRoots = GameDataTreeBuilder.fromPaths(treePaths);
+      if (_selected != null && !_filesByPath.containsKey(_selected!.path)) {
+        _selected = _filesByPath.values.isEmpty ? null : _filesByPath.values.first;
+      } else {
+        _selected ??= _filesByPath.values.isEmpty ? null : _filesByPath.values.first;
+      }
     });
   }
 
   Future<void> _saveEntry(ActionCatalogEntryFile file) async {
     setState(() => _savingPath = file.path);
     try {
-      final index = _entries.indexWhere((e) => e.path == file.path);
-      if (index < 0) return;
-      final model = _entries[index].model;
+      final model = _filesByPath[file.path]?.model ?? file.model;
       final repository = context.read<ProjectRepository>();
       final envelope = await repository.loadEnvelope(file.path);
       await repository.savePayload(
@@ -69,30 +91,53 @@ class _ActionsTableScreenState extends State<ActionsTableScreen> {
     }
   }
 
-  void _updateEntry(int index, ActionCatalogEntrySOModel model) {
-    final file = _entries[index];
+  void _updateSelected(ActionCatalogEntrySOModel model) {
+    final file = _selected;
+    if (file == null) return;
+    final updated = ActionCatalogEntryFile(
+      path: file.path,
+      displayName: file.displayName,
+      envelope: file.envelope,
+      model: model,
+    );
     setState(() {
-      _entries[index] = ActionCatalogEntryFile(
-        path: file.path,
-        displayName: file.displayName,
-        envelope: file.envelope,
-        model: model,
-      );
+      _filesByPath[file.path] = updated;
+      _selected = updated;
     });
+  }
+
+  void _onTreeFileTap(GameDataTreeNode node) {
+    final path = node.path;
+    if (path == null) return;
+
+    if (_registry != null && path == _registry!.path) {
+      context.push('/so-edit', extra: path);
+      return;
+    }
+
+    final file = _filesByPath[path];
+    if (file != null) {
+      setState(() => _selected = file);
+    } else {
+      context.push('/so-edit', extra: path);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_entries.isEmpty) {
+    final hasEntries = _filesByPath.isNotEmpty;
+    final hasRegistry = _registry != null;
+
+    if (!hasEntries && !hasRegistry) {
       return Scaffold(
         appBar: AppBar(title: const Text('Action catalog')),
         body: const Center(
           child: Padding(
             padding: EdgeInsets.all(24),
             child: Text(
-              'No ActionCatalogEntrySO JSON files found.\n\n'
-              'Export action catalog entries from Unity under '
-              'Assets/GameData/actionable/ then push to Firebase.',
+              'No action catalog JSON found.\n\n'
+              'Export from Unity under Assets/GameData/RAW/actionable/ '
+              '(registry + nested ActionCatalogEntrySO files), then pull into the app.',
               textAlign: TextAlign.center,
             ),
           ),
@@ -100,91 +145,189 @@ class _ActionsTableScreenState extends State<ActionsTableScreen> {
       );
     }
 
+    final selected = _selected;
+    final saving = selected != null && _savingPath == selected.path;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Action catalog'),
         actions: <Widget>[
-          IconButton(
-            tooltip: 'Open file editor',
-            icon: const Icon(Icons.open_in_new),
-            onPressed: _entries.isEmpty
-                ? null
-                : () => context.push('/so-edit', extra: _entries.first.path),
-          ),
+          if (hasRegistry)
+            IconButton(
+              tooltip: 'Edit catalog registry',
+              icon: const Icon(Icons.settings_outlined),
+              onPressed: () => context.push('/so-edit', extra: _registry!.path),
+            ),
         ],
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(12),
-        itemCount: _entries.length,
-        itemBuilder: (context, index) {
-          final file = _entries[index];
-          final model = file.model;
-          final saving = _savingPath == file.path;
-          return SectionCard(
-            title: file.displayName,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                IntField(
-                  label: 'Action ID',
-                  initialValue: model.actionId,
-                  onChanged: (v) => _updateEntry(
-                    index,
-                    model.copyWith(actionId: v),
-                  ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          if (hasRegistry)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.sm,
+                AppSpacing.md,
+                0,
+              ),
+              child: SectionCard(
+                title: 'Catalog registry',
+                subtitle: _registry!.path,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      'Catalog root: ${_registry!.effectiveCatalogRoot().isEmpty ? "(same folder as registry)" : _registry!.effectiveCatalogRoot()}',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      '${_filesByPath.length} catalog entr${_filesByPath.length == 1 ? 'y' : 'ies'} under actionable/',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
-                TextFormField(
-                  initialValue: model.editorName,
-                  decoration: const InputDecoration(labelText: 'Editor name'),
-                  onChanged: (v) => _updateEntry(
-                    index,
-                    model.copyWith(editorName: v),
-                  ),
-                ),
-                AnimationTypeIdDropdown(
-                  catalog: widget.catalog,
-                  label: 'Animation type',
-                  value: model.animation,
-                  onChanged: (v) => _updateEntry(
-                    index,
-                    model.copyWith(animation: v),
-                  ),
-                ),
-                TextFormField(
-                  initialValue: model.category,
-                  decoration: const InputDecoration(labelText: 'Category'),
-                  onChanged: (v) => _updateEntry(
-                    index,
-                    model.copyWith(category: v),
-                  ),
-                ),
-                TextFormField(
-                  initialValue: model.gameplayDisplayName,
-                  decoration: const InputDecoration(
-                    labelText: 'Gameplay display name',
-                  ),
-                  onChanged: (v) => _updateEntry(
-                    index,
-                    model.copyWith(gameplayDisplayName: v),
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: FilledButton.tonal(
-                    onPressed: saving ? null : () => _saveEntry(file),
-                    child: saving
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Save entry'),
-                  ),
-                ),
-              ],
+              ),
             ),
-          );
-        },
+          Expanded(
+            flex: 5,
+            child: GameDataFolderTreeView(
+              roots: _treeRoots,
+              initiallyExpandAll: true,
+              emptyMessage: 'No catalog entries',
+              bottomPadding: 8,
+              onFileTap: _onTreeFileTap,
+              fileBuilder: (context, node) {
+                final path = node.path;
+                if (path == null) return const SizedBox.shrink();
+                final isRegistry =
+                    _registry != null && path == _registry!.path;
+                final file = _filesByPath[path];
+                final label = isRegistry
+                    ? 'Catalog registry'
+                    : file != null
+                    ? '${file.displayName} [${file.model.actionId}]'
+                    : node.name;
+                final subtitle = isRegistry
+                    ? path
+                    : file != null
+                    ? ActionCatalogPaths.treePathFromKey(path)
+                    : path;
+                final selectedPath = _selected?.path;
+                return ListTile(
+                  dense: true,
+                  selected: path == selectedPath,
+                  title: Text(label),
+                  subtitle: Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  trailing: isRegistry
+                      ? const Icon(Icons.folder_special_outlined, size: 20)
+                      : Text(
+                          file?.model.gameplayDisplayName ?? '',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                  onTap: () => _onTreeFileTap(node),
+                );
+              },
+            ),
+          ),
+          if (selected != null)
+            Expanded(
+              flex: 4,
+              child: Material(
+                elevation: 4,
+                child: ListView(
+                  padding: const EdgeInsets.all(12),
+                  children: <Widget>[
+                    SectionCard(
+                      title: selected.displayName,
+                      subtitle: ActionCatalogPaths.treePathFromKey(selected.path),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          IntField(
+                            label: 'Action ID',
+                            initialValue: selected.model.actionId,
+                            onChanged: (v) => _updateSelected(
+                              selected.model.copyWith(actionId: v),
+                            ),
+                          ),
+                          TextFormField(
+                            initialValue: selected.model.editorName,
+                            decoration: const InputDecoration(
+                              labelText: 'Editor name',
+                            ),
+                            onChanged: (v) => _updateSelected(
+                              selected.model.copyWith(editorName: v),
+                            ),
+                          ),
+                          AnimationTypeIdDropdown(
+                            catalog: widget.catalog,
+                            label: 'Animation type',
+                            value: selected.model.animation,
+                            onChanged: (v) => _updateSelected(
+                              selected.model.copyWith(animation: v),
+                            ),
+                          ),
+                          TextFormField(
+                            initialValue: selected.model.category,
+                            decoration: const InputDecoration(
+                              labelText: 'Category',
+                            ),
+                            onChanged: (v) => _updateSelected(
+                              selected.model.copyWith(category: v),
+                            ),
+                          ),
+                          TextFormField(
+                            initialValue: selected.model.gameplayDisplayName,
+                            decoration: const InputDecoration(
+                              labelText: 'Gameplay display name',
+                            ),
+                            onChanged: (v) => _updateSelected(
+                              selected.model.copyWith(gameplayDisplayName: v),
+                            ),
+                          ),
+                          Row(
+                            children: <Widget>[
+                              TextButton.icon(
+                                onPressed: () => context.push(
+                                  '/so-edit',
+                                  extra: selected.path,
+                                ),
+                                icon: const Icon(Icons.open_in_new),
+                                label: const Text('Full editor'),
+                              ),
+                              const Spacer(),
+                              FilledButton.tonal(
+                                onPressed: saving
+                                    ? null
+                                    : () => _saveEntry(selected),
+                                child: saving
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Text('Save entry'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

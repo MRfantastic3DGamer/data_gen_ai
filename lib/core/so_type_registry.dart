@@ -188,7 +188,14 @@ class SOTypeRegistry {
   }
 
   static SOTypeInfo? fromPath(String path) {
-    final lower = path.toLowerCase();
+    final lower = path.replaceAll('\\', '/').toLowerCase();
+    final baseName = lower.split('/').last;
+    if (baseName.contains('action_catalog_registry')) {
+      return _byKey('ActionCatalogRegistry');
+    }
+    if (lower.contains('/actionable/') || lower.startsWith('actionable/')) {
+      return _byKey('ActionCatalogEntrySO');
+    }
     for (final info in all) {
       if (info.subfolder.isNotEmpty &&
           lower.contains('/${info.subfolder.toLowerCase()}/')) {
@@ -203,5 +210,12 @@ class SOTypeRegistry {
 
   static List<String> get categories {
     return all.map((e) => e.category).toSet().toList()..sort();
+  }
+
+  static SOTypeInfo? _byKey(String key) {
+    for (final info in all) {
+      if (info.key == key) return info;
+    }
+    return null;
   }
 }

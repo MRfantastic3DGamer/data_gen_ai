@@ -1,3 +1,5 @@
+import 'package:data_gen_ai/utils/unity_json_fields.dart';
+
 class SerializationData {
   const SerializationData({
     this.serializedFormat = 2,
@@ -22,12 +24,13 @@ class SerializationData {
   factory SerializationData.fromJson(Map<String, dynamic>? json) {
     if (json == null) return const SerializationData();
     return SerializationData(
-      serializedFormat: (json['SerializedFormat'] ?? 2) as int,
-      serializedBytes: (json['SerializedBytes'] ?? '') as String,
+      serializedFormat: UnityJsonFields.asInt(json['SerializedFormat'], fallback: 2),
+      serializedBytes: UnityJsonFields.asBytesField(json['SerializedBytes']),
       referencedUnityObjects:
           (json['ReferencedUnityObjects'] as List<dynamic>? ??
           const <dynamic>[]),
-      serializedBytesString: (json['SerializedBytesString'] ?? '') as String,
+      serializedBytesString:
+          UnityJsonFields.asBytesField(json['SerializedBytesString']),
       prefab:
           (json['Prefab'] as Map<String, dynamic>? ??
           const <String, dynamic>{'fileID': 0}),

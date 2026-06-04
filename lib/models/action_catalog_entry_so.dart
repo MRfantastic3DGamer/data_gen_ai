@@ -1,3 +1,5 @@
+import 'package:data_gen_ai/utils/unity_json_fields.dart';
+
 class ActionCatalogEntrySOModel {
   const ActionCatalogEntrySOModel({
     this.actionId = 0,
@@ -17,11 +19,11 @@ class ActionCatalogEntrySOModel {
 
   factory ActionCatalogEntrySOModel.fromJson(Map<String, dynamic> json) =>
       ActionCatalogEntrySOModel(
-        actionId: (json['actionId'] ?? 0) as int,
-        editorName: (json['editorName'] ?? '') as String,
-        animation: (json['animation'] ?? 0) as int,
-        category: (json['category'] ?? '') as String,
-        gameplayDisplayName: (json['gameplayDisplayName'] ?? '') as String,
+        actionId: UnityJsonFields.asInt(json['actionId']),
+        editorName: UnityJsonFields.asString(json['editorName']),
+        animation: UnityJsonFields.asInt(json['animation']),
+        category: UnityJsonFields.asString(json['category']),
+        gameplayDisplayName: UnityJsonFields.asString(json['gameplayDisplayName']),
         tags: (json['tags'] as List<dynamic>? ?? const <dynamic>[])
             .map((dynamic e) => '$e')
             .toList(),
