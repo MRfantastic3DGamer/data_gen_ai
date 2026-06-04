@@ -10,7 +10,6 @@ import 'package:data_gen_ai/widgets/forms/asset_reference_field.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:data_gen_ai/widgets/forms/vector2_field.dart';
 import 'package:data_gen_ai/widgets/forms/vector3_field.dart';
-import 'package:data_gen_ai/widgets/editors/editor_list_view.dart';
 import 'package:flutter/material.dart';
 import 'package:data_gen_ai/core/theme/editor_preferences_scope.dart';
 
@@ -88,7 +87,7 @@ class _BeliefEditorFormState extends State<BeliefEditorForm> {
                 onChanged: (v) => _update(_copy(field: v)),
               ),
               DropdownButtonFormField<int>(
-                value: _model.condition,
+                initialValue: _model.condition,
                 decoration: const InputDecoration(labelText: 'Condition'),
                 items: BeliefCondition.values
                     .map(

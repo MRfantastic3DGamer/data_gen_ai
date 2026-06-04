@@ -1,6 +1,5 @@
 import 'package:data_gen_ai/models/game_data_file_entry.dart';
 import 'package:data_gen_ai/models/move_library_so.dart';
-import 'package:data_gen_ai/models/unity_reference.dart';
 import 'package:data_gen_ai/services/registry_catalog_service.dart';
 import 'package:data_gen_ai/widgets/editors/so_editor_utils.dart';
 import 'package:data_gen_ai/widgets/forms/animation_type_id_dropdown.dart';
@@ -8,7 +7,6 @@ import 'package:data_gen_ai/widgets/forms/list_editor.dart';
 import 'package:data_gen_ai/widgets/forms/raw_map_config_editor.dart';
 import 'package:data_gen_ai/widgets/forms/asset_reference_field.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
-import 'package:data_gen_ai/widgets/editors/editor_list_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:data_gen_ai/core/theme/editor_preferences_scope.dart';

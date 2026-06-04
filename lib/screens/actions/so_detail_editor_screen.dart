@@ -356,7 +356,7 @@ class _SODetailEditorScreenState extends State<SODetailEditorScreen> {
               SectionCard(
                 title: 'Query type',
                 child: DropdownButtonFormField<String>(
-                  value: _queryViewTypeKey,
+                  initialValue: _queryViewTypeKey,
                   decoration: const InputDecoration(
                     labelText: 'Query view class',
                   ),

@@ -350,7 +350,7 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
               ),
               const SizedBox(height: AppSpacing.md),
               DropdownButtonFormField<SOTypeInfo>(
-                value: selected,
+                initialValue: selected,
                 decoration: const InputDecoration(labelText: 'Type'),
                 items: createTypes
                     .map(

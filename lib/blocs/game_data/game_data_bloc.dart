@@ -1,6 +1,5 @@
 import 'package:data_gen_ai/blocs/game_data/game_data_event.dart';
 import 'package:data_gen_ai/blocs/game_data/game_data_state.dart';
-import 'package:data_gen_ai/models/game_data_file_entry.dart';
 import 'package:data_gen_ai/repositories/project_repository.dart';
 import 'package:data_gen_ai/services/asset_index_service.dart';
 import 'package:data_gen_ai/services/game_data_defaults.dart';

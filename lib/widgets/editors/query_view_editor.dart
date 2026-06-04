@@ -16,7 +16,6 @@ import 'package:data_gen_ai/models/query_view/sensor_agent_query_view.dart';
 import 'package:data_gen_ai/models/query_view/sensor_item_query_view.dart';
 import 'package:data_gen_ai/models/query_view/threat_advertisement_query_view.dart';
 import 'package:data_gen_ai/models/query_view/workpost_query_view.dart';
-import 'package:data_gen_ai/models/unity_reference.dart';
 import 'package:data_gen_ai/services/registry_catalog_service.dart';
 import 'package:data_gen_ai/widgets/editors/so_editor_utils.dart';
 import 'package:data_gen_ai/widgets/forms/bool_toggle.dart';

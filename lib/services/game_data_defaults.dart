@@ -1,4 +1,3 @@
-import 'package:data_gen_ai/core/query_view_types.dart';
 
 /// Default Unity JSON payloads for newly created assets.
 abstract final class GameDataDefaults {
