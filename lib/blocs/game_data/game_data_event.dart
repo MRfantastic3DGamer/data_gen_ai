@@ -58,6 +58,14 @@ class GameDataCreateRequested extends GameDataEvent {
   List<Object?> get props => [typeInfo.key, name];
 }
 
+class GameDataDeleteRequested extends GameDataEvent {
+  const GameDataDeleteRequested(this.path);
+  final String path;
+
+  @override
+  List<Object?> get props => [path];
+}
+
 class GameDataReloadRequested extends GameDataEvent {
   const GameDataReloadRequested();
 }

@@ -255,12 +255,54 @@ class _ActionsHubScreenState extends State<ActionsHubScreen> {
   }
 
   Widget _entryTile(BuildContext context, GameDataFileEntry entry) {
-    return GameDataListTile(
-      title: entry.displayName,
-      subtitle: entry.path.split('/').last,
-      typeLabel: entry.typeLabel,
-      isDirty: entry.isDirty,
-      onTap: () => context.push('/so-edit', extra: entry.path),
+    return Dismissible(
+      key: ValueKey<String>(entry.path),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: AppSpacing.lg),
+        color: Theme.of(context).colorScheme.errorContainer,
+        child: Icon(
+          Icons.delete_outline,
+          color: Theme.of(context).colorScheme.onErrorContainer,
+        ),
+      ),
+      confirmDismiss: (_) async {
+        return await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Delete asset?'),
+                content: Text(
+                  'Remove "${entry.displayName}" from storage on commit?\n\n${entry.path}',
+                ),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: const Text('Cancel'),
+                  ),
+                  FilledButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: const Text('Delete'),
+                  ),
+                ],
+              ),
+            ) ??
+            false;
+      },
+      onDismissed: (_) {
+        context.read<GameDataBloc>().add(GameDataDeleteRequested(entry.path));
+        AppSnackBar.showSuccess(
+          context,
+          'Marked for deletion — commit to remove from storage.',
+        );
+      },
+      child: GameDataListTile(
+        title: entry.displayName,
+        subtitle: entry.path,
+        typeLabel: entry.typeLabel,
+        isDirty: entry.isDirty,
+        onTap: () => context.push('/so-edit', extra: entry.path),
+      ),
     );
   }
 

@@ -22,8 +22,29 @@ Example logical key `beliefs/MyBelief.json` → RTDB path `gameData/v1/files/bel
 1. Firebase is initialized on startup (`main.dart`).
 2. Open **Data source** and choose **Firebase Realtime Database** (default).
 3. Edit entries and **Commit** — writes go directly to RTDB.
+4. Swipe an entry left to delete it; **Commit** removes it from storage/Firebase.
 
 Local **RAW folder** mode remains available for offline/USB workflows.
+
+## Reference format
+
+ScriptableObject cross-references use logical JSON keys instead of Unity GUIDs:
+
+```json
+{
+  "assetKey": "beliefs/MyBelief.json",
+  "displayName": "MyBelief"
+}
+```
+
+Legacy `{ "fileID", "guid", "type" }` refs are still accepted on import. Unity export converts them automatically.
+
+## Deletion sync
+
+- **Flutter**: swipe-delete an entry, then **Commit** — removes the RTDB node (or local JSON file).
+- **Unity Push RAW to Firebase**: uploads local files, then deletes remote entries that no longer exist locally.
+- **Unity Pull Firebase to RAW**: downloads remote files, then deletes local RAW JSON absent from Firebase.
+- **Unity Export to JSON**: removes stale RAW JSON files whose `.asset` was deleted.
 
 ## Unity editor
 

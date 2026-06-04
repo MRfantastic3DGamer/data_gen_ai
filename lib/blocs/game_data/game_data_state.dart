@@ -6,6 +6,7 @@ class GameDataState extends Equatable {
     this.loading = false,
     this.committing = false,
     this.entries = const <GameDataFileEntry>[],
+    this.pendingDeletes = const <String>{},
     this.searchQuery = '',
     this.categoryFilter,
     this.typeFilter,
@@ -17,6 +18,7 @@ class GameDataState extends Equatable {
   final bool loading;
   final bool committing;
   final List<GameDataFileEntry> entries;
+  final Set<String> pendingDeletes;
   final String searchQuery;
   final String? categoryFilter;
   final String? typeFilter;
@@ -24,7 +26,8 @@ class GameDataState extends Equatable {
   final int? lastCommitCount;
   final String? savedMessage;
 
-  int get dirtyCount => entries.where((e) => e.isDirty).length;
+  int get dirtyCount =>
+      entries.where((e) => e.isDirty).length + pendingDeletes.length;
 
   List<GameDataFileEntry> get filteredEntries {
     var result = entries;
@@ -56,6 +59,7 @@ class GameDataState extends Equatable {
     bool? loading,
     bool? committing,
     List<GameDataFileEntry>? entries,
+    Set<String>? pendingDeletes,
     String? searchQuery,
     String? categoryFilter,
     String? typeFilter,
@@ -69,6 +73,7 @@ class GameDataState extends Equatable {
       loading: loading ?? this.loading,
       committing: committing ?? this.committing,
       entries: entries ?? this.entries,
+      pendingDeletes: pendingDeletes ?? this.pendingDeletes,
       searchQuery: searchQuery ?? this.searchQuery,
       categoryFilter: categoryFilter ?? this.categoryFilter,
       typeFilter: typeFilter ?? this.typeFilter,
@@ -85,6 +90,7 @@ class GameDataState extends Equatable {
     loading,
     committing,
     entries,
+    pendingDeletes,
     searchQuery,
     categoryFilter,
     typeFilter,

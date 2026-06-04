@@ -71,7 +71,9 @@ class RegistryCatalogService {
     // Learn guids from any reference in all payloads pointing at a known types path.
     for (final entry in entries) {
       _scanRefs(entry.payload, (ref) {
-        final matched = _fileForTypesGuid(ref.guid);
+        final matched = ref.assetKey.isNotEmpty
+            ? _fileForTypesAssetKey(ref.assetKey)
+            : _fileForTypesGuid(ref.guid);
         if (matched != null && ref.guid.isNotEmpty) {
           typesByGuid[ref.guid] = matched;
         }
@@ -86,6 +88,7 @@ class RegistryCatalogService {
     );
 
     var matched = typesRef.guid.isNotEmpty ? typesByGuid[typesRef.guid] : null;
+    matched ??= _fileForTypesAssetKey(typesRef.assetKey);
     matched ??= _matchTypesFileForFaction(faction);
     if (matched == null) return;
 
@@ -123,12 +126,21 @@ class RegistryCatalogService {
     return null;
   }
 
+  AnimationTypesConfigFile? _fileForTypesAssetKey(String assetKey) {
+    if (assetKey.isEmpty) return null;
+    for (final file in animationTypesFiles) {
+      if (file.path == assetKey) return file;
+    }
+    return null;
+  }
+
   void _scanRefs(
     Object? node,
     void Function(UnityReference ref) onRef,
   ) {
     if (node is Map<String, dynamic>) {
-      if (node.containsKey('guid') && node.containsKey('fileID')) {
+      if (node.containsKey('assetKey') ||
+          (node.containsKey('guid') && node.containsKey('fileID'))) {
         onRef(UnityReference.fromJson(node));
       }
       for (final value in node.values) {

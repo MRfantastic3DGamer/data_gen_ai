@@ -163,13 +163,24 @@ class ProjectRepository {
     return GameDataPath.normalizeKey(key);
   }
 
-  Future<int> commitAll(List<GameDataFileEntry> dirtyEntries) async {
+  Future<int> commitAll(
+    List<GameDataFileEntry> dirtyEntries, {
+    Iterable<String> deletedKeys = const <String>[],
+  }) async {
     var count = 0;
+    for (final key in deletedKeys) {
+      await deleteEntry(key);
+      count++;
+    }
     for (final entry in dirtyEntries.where((e) => e.isDirty)) {
       await saveEntry(entry);
       count++;
     }
     return count;
+  }
+
+  Future<void> deleteEntry(String key) async {
+    await _storage.deleteContent(GameDataPath.normalizeKey(key));
   }
 
   /// For local backend: absolute RAW root (meta file indexing).

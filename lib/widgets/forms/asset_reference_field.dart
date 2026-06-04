@@ -43,14 +43,17 @@ class AssetReferenceField extends StatelessWidget {
     }
 
     final current = index.optionForReference(reference) ??
-        (reference.guid.isEmpty
+        (reference.isNull
             ? AssetPickerOption.empty
             : AssetPickerOption(
                 guid: reference.guid,
                 fileId: reference.fileId,
-                label: 'Unknown asset',
-                subtitle: reference.guid,
+                label: reference.label,
+                subtitle: reference.assetKey.isNotEmpty
+                    ? reference.assetKey
+                    : reference.guid,
                 typeKey: '',
+                path: reference.assetKey.isEmpty ? null : reference.assetKey,
               ));
 
     return InkWell(
@@ -69,10 +72,10 @@ class AssetReferenceField extends StatelessWidget {
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: label,
-          helperText: current.hasGuid
+          helperText: current.hasGuid || current.path != null
               ? null
-              : current.path != null
-              ? 'GUID not indexed — copy .meta files into RAW folder'
+              : reference.assetKey.isNotEmpty
+              ? reference.assetKey
               : 'Tap to choose from loaded assets',
           suffixIcon: const Icon(Icons.search),
         ),

@@ -85,4 +85,9 @@ class FirebaseGameDataStorage implements GameDataStorage {
           DateTime.now().millisecondsSinceEpoch,
     });
   }
+
+  @override
+  Future<void> deleteContent(String key) async {
+    await _entryRef(key).remove();
+  }
 }
