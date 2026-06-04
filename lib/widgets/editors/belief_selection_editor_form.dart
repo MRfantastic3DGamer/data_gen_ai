@@ -9,6 +9,7 @@ import 'package:data_gen_ai/widgets/forms/data_source_toggle.dart';
 import 'package:data_gen_ai/widgets/forms/list_editor.dart';
 import 'package:data_gen_ai/widgets/forms/asset_reference_field.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
+import 'package:data_gen_ai/widgets/editors/editor_list_view.dart';
 import 'package:flutter/material.dart';
 
 class BeliefSelectionEditorForm extends StatefulWidget {
@@ -42,7 +43,7 @@ class _BeliefSelectionEditorFormState extends State<BeliefSelectionEditorForm> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
+    return EditorListView(
       padding: const EdgeInsets.all(12),
       children: <Widget>[
         SectionCard(
@@ -173,10 +174,14 @@ class _BeliefSelectionEditorFormState extends State<BeliefSelectionEditorForm> {
                           );
                         },
                       ),
-                    DataSourceToggle(
-                      label: 'Function source',
-                      value: item.functionSource,
-                      onChanged: (v) {
+                    Text(
+                      'Consideration function (inline)',
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    ConsiderationFunctionConfigEditor(
+                      config: item.functionInline,
+                      onChanged: (cfg) {
                         final list = List<ConsiderationItemModel>.from(
                           _model.considerables,
                         );
@@ -184,9 +189,12 @@ class _BeliefSelectionEditorFormState extends State<BeliefSelectionEditorForm> {
                           considerableSource: item.considerableSource,
                           considerableAsset: item.considerableAsset,
                           considerableInline: item.considerableInline,
-                          functionSource: v,
-                          functionAsset: item.functionAsset,
-                          functionInline: item.functionInline,
+                          functionSource: 1,
+                          functionAsset: const UnityReference(
+                            guid: '',
+                            fileId: 0,
+                          ),
+                          functionInline: cfg,
                         );
                         _update(
                           BeliefSelectionSOModel(
@@ -196,54 +204,6 @@ class _BeliefSelectionEditorFormState extends State<BeliefSelectionEditorForm> {
                         );
                       },
                     ),
-                    if (item.functionSource == 0)
-                      AssetReferenceField(
-                        label: 'Function asset',
-                        reference: item.functionAsset,
-                        typeKeys: const <String>['ConsiderationFunctionSO'],
-                        onChanged: (ref) {
-                          final list = List<ConsiderationItemModel>.from(
-                            _model.considerables,
-                          );
-                          list[index] = ConsiderationItemModel(
-                            considerableSource: item.considerableSource,
-                            considerableAsset: item.considerableAsset,
-                            considerableInline: item.considerableInline,
-                            functionSource: item.functionSource,
-                            functionAsset: ref,
-                            functionInline: item.functionInline,
-                          );
-                          _update(
-                            BeliefSelectionSOModel(
-                              belief: _model.belief,
-                              considerables: list,
-                            ),
-                          );
-                        },
-                      )
-                    else
-                      ConsiderationFunctionConfigEditor(
-                        config: item.functionInline,
-                        onChanged: (cfg) {
-                          final list = List<ConsiderationItemModel>.from(
-                            _model.considerables,
-                          );
-                          list[index] = ConsiderationItemModel(
-                            considerableSource: item.considerableSource,
-                            considerableAsset: item.considerableAsset,
-                            considerableInline: item.considerableInline,
-                            functionSource: item.functionSource,
-                            functionAsset: item.functionAsset,
-                            functionInline: cfg,
-                          );
-                          _update(
-                            BeliefSelectionSOModel(
-                              belief: _model.belief,
-                              considerables: list,
-                            ),
-                          );
-                        },
-                      ),
                   ],
                 ),
               ),

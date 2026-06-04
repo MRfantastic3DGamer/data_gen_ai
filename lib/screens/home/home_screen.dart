@@ -64,7 +64,7 @@ class HomeScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Edit Unity GameData via Firebase or local JSON',
+                              'Edit locally, sync with Firebase when ready',
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyMedium
@@ -86,24 +86,33 @@ class HomeScreen extends StatelessWidget {
             sliver: SliverList(
               delegate: SliverChildListDelegate(<Widget>[
                 NavCard(
-                  title: 'Actions & Beliefs',
-                  subtitle: 'Search, filter, and edit exported JSON',
-                  icon: Icons.play_circle_outline_rounded,
+                  title: 'Utility AI',
+                  subtitle:
+                      'Beliefs, belief selection, considerables, queries',
+                  icon: Icons.psychology_rounded,
                   iconColor: colorScheme.primary,
                   delayMs: 0,
+                  onTap: () => context.push('/utility-ai'),
+                ),
+                NavCard(
+                  title: 'All game data',
+                  subtitle: 'Search every JSON file (actionables, etc.)',
+                  icon: Icons.play_circle_outline_rounded,
+                  iconColor: colorScheme.primary,
+                  delayMs: 20,
                   onTap: () => context.push('/actions'),
                 ),
                 NavCard(
                   title: 'Registries',
-                  subtitle: 'Factions & animation type tables',
+                  subtitle: 'Factions, actions, animation & work type tables',
                   icon: Icons.table_chart_rounded,
                   iconColor: colorScheme.secondary,
                   delayMs: 40,
                   onTap: () => context.push('/registries'),
                 ),
                 NavCard(
-                  title: 'Data source',
-                  subtitle: 'Firebase Realtime DB or local RAW folder',
+                  title: 'Sync & local folder',
+                  subtitle: 'Pull from Firebase · edit locally · push changes',
                   icon: Icons.cloud_sync_outlined,
                   iconColor: colorScheme.tertiary,
                   delayMs: 80,

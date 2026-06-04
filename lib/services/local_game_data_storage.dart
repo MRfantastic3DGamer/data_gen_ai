@@ -36,4 +36,6 @@ class LocalGameDataStorage implements GameDataStorage {
     final path = GameDataPath.absolutePathFromKey(key, root.path);
     await _fileService.writeFile(path, content);
   }
+
+  Future<void> clearAllLocalFiles() => _fileService.clearRawRootDirectory();
 }

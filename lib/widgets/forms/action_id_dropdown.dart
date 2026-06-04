@@ -28,9 +28,42 @@ class ActionIdDropdown extends StatelessWidget {
         )
         .toList();
 
+    if (value >= 0 && !options.any((o) => o.value == value)) {
+      options.add(
+        SearchableOption<int>(
+          value: value,
+          label: 'Action_$value [$value]',
+          searchTerms: '$value',
+        ),
+      );
+      options.sort((a, b) => a.value.compareTo(b.value));
+    }
+
     final effective = options.any((o) => o.value == value)
         ? value
         : (options.isNotEmpty ? options.first.value : -1);
+
+    if (options.length <= 1) {
+      return ListTile(
+        title: Text(label),
+        subtitle: const Text(
+          'No action catalog entries found. Export ActionCatalogEntrySO '
+          'assets from Unity or set action id manually.',
+        ),
+        trailing: SizedBox(
+          width: 72,
+          child: TextFormField(
+            initialValue: value.toString(),
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(isDense: true),
+            onChanged: (v) {
+              final parsed = int.tryParse(v);
+              if (parsed != null) onChanged(parsed);
+            },
+          ),
+        ),
+      );
+    }
 
     return SearchableIntDropdown(
       label: label,

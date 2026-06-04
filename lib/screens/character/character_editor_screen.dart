@@ -6,6 +6,9 @@ import 'package:data_gen_ai/blocs/ai_assistant/ai_assistant_state.dart';
 import 'package:data_gen_ai/blocs/character/character_bloc.dart';
 import 'package:data_gen_ai/blocs/character/character_event.dart';
 import 'package:data_gen_ai/blocs/character/character_state.dart';
+import 'package:data_gen_ai/blocs/game_data/game_data_bloc.dart';
+import 'package:data_gen_ai/blocs/game_data/game_data_event.dart';
+import 'package:data_gen_ai/core/game_data_path.dart';
 import 'package:data_gen_ai/widgets/common/ai_prompt_sheet.dart';
 import 'package:data_gen_ai/widgets/common/json_preview_panel.dart';
 import 'package:data_gen_ai/widgets/editors/character_data_editor_form.dart';
@@ -24,18 +27,41 @@ class CharacterEditorScreen extends StatefulWidget {
 
 class _CharacterEditorScreenState extends State<CharacterEditorScreen> {
   final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _fileNameController = TextEditingController();
+  String? _loadedPath;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final path = GoRouterState.of(context).extra as String?;
-    if (path != null) {
-      context.read<CharacterBloc>().add(CharacterLoaded(path));
+    if (path != _loadedPath) {
+      _loadedPath = path;
+      if (path != null) {
+        context.read<CharacterBloc>().add(CharacterLoaded(path));
+        _fileNameController.text = _fileNameFromPath(path);
+      } else {
+        _fileNameController.clear();
+      }
     }
   }
 
   @override
+  void dispose() {
+    _descriptionController.dispose();
+    _fileNameController.dispose();
+    super.dispose();
+  }
+
+  static String _fileNameFromPath(String path) {
+    final file = GameDataPath.fileNameFromKey(path);
+    return file.endsWith('.json') ? file.substring(0, file.length - 5) : file;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final path = GoRouterState.of(context).extra as String?;
+    final isNew = path == null;
+
     return BlocListener<AIAssistantBloc, AIAssistantState>(
       listenWhen: (previous, current) =>
           previous.output != current.output && current.output != null,
@@ -61,7 +87,7 @@ class _CharacterEditorScreenState extends State<CharacterEditorScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Character Editor'),
+          title: Text(isNew ? 'New character' : 'Character editor'),
           actions: <Widget>[
             IconButton(
               icon: const Icon(Icons.auto_awesome),
@@ -73,17 +99,48 @@ class _CharacterEditorScreenState extends State<CharacterEditorScreen> {
           listener: (context, state) {
             _descriptionController.text = state.data.description;
             if (state.saved) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('Character saved')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    isNew && state.path != null
+                        ? 'Saved as ${state.path}'
+                        : 'Character saved',
+                  ),
+                ),
+              );
+              context.read<GameDataBloc>().add(const GameDataReloadRequested());
+              if (isNew && state.path != null) {
+                context.pop(state.path);
+              }
+            }
+            if (state.error != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.error!)),
+              );
             }
           },
           builder: (context, state) {
+            if (state.loading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
             final data = state.data;
             return SingleChildScrollView(
               padding: const EdgeInsets.all(12),
               child: Column(
                 children: <Widget>[
+                  SectionCard(
+                    title: 'File',
+                    child: TextField(
+                      controller: _fileNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'File name',
+                        helperText: 'Saved as Characters/{name}.json',
+                      ),
+                      textCapitalization: TextCapitalization.none,
+                      readOnly: !isNew,
+                    ),
+                  ),
                   CharacterDataEditorForm(
                     data: data,
                     descriptionController: _descriptionController,
@@ -109,10 +166,12 @@ class _CharacterEditorScreenState extends State<CharacterEditorScreen> {
         ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () {
-            final path = GoRouterState.of(context).extra as String?;
-            if (path != null) {
-              context.read<CharacterBloc>().add(CharacterSaved(path));
-            }
+            context.read<CharacterBloc>().add(
+              CharacterSaved(
+                path: path ?? context.read<CharacterBloc>().state.path,
+                fileName: _fileNameController.text,
+              ),
+            );
           },
           icon: const Icon(Icons.save),
           label: const Text('Save'),

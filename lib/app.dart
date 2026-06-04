@@ -15,6 +15,7 @@ import 'package:data_gen_ai/repositories/registry_repository.dart';
 import 'package:data_gen_ai/services/asset_index_service.dart';
 import 'package:data_gen_ai/services/file_service.dart';
 import 'package:data_gen_ai/services/game_data_backend_service.dart';
+import 'package:data_gen_ai/services/game_data_sync_service.dart';
 import 'package:data_gen_ai/services/gemma_service.dart';
 import 'package:data_gen_ai/services/json_converter.dart';
 import 'package:data_gen_ai/services/registry_catalog_service.dart';
@@ -38,12 +39,17 @@ class GameDataEditorApp extends StatelessWidget {
     final registryCatalog = RegistryCatalogService();
     final registryRepository = RegistryRepository(projectRepository);
     final aiRepository = AIRepository(GemmaService());
+    final syncService = GameDataSyncService(
+      firebaseStorage: backendService.firebaseStorage,
+      localStorage: backendService.localStorage,
+    );
 
     return MultiRepositoryProvider(
       providers: <RepositoryProvider<dynamic>>[
         RepositoryProvider<GameDataBackendService>.value(
           value: backendService,
         ),
+        RepositoryProvider<GameDataSyncService>.value(value: syncService),
         RepositoryProvider<FileService>.value(value: fileService),
         RepositoryProvider<AssetIndexService>(
           create: (c) => AssetIndexService(c.read<FileService>()),

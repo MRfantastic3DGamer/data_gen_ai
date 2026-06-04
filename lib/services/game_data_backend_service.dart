@@ -5,42 +5,40 @@ import 'package:data_gen_ai/services/game_data_storage.dart';
 import 'package:data_gen_ai/services/local_game_data_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Editing always uses the local RAW folder. Firebase is only used via [GameDataSyncService].
 class GameDataBackendService {
   GameDataBackendService({
     FileService? fileService,
     FirebaseGameDataStorage? firebaseStorage,
-  }) : _fileService = fileService ?? FileService(),
-       _firebaseStorage = firebaseStorage ?? FirebaseGameDataStorage();
+  }) : _firebaseStorage = firebaseStorage ?? FirebaseGameDataStorage(),
+       _localStorage = LocalGameDataStorage(fileService ?? FileService());
 
   static const _prefKey = 'game_data_backend';
 
-  final FileService _fileService;
   final FirebaseGameDataStorage _firebaseStorage;
+  final LocalGameDataStorage _localStorage;
 
-  GameDataBackend _backend = GameDataBackend.firebase;
+  /// Always local — all design work reads/writes the on-device RAW folder.
+  GameDataBackend get backend => GameDataBackend.localFiles;
 
-  GameDataBackend get backend => _backend;
+  FirebaseGameDataStorage get firebaseStorage => _firebaseStorage;
+
+  LocalGameDataStorage get localStorage => _localStorage;
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
-    _backend = GameDataBackend.fromStorageKey(prefs.getString(_prefKey));
+    await prefs.setString(_prefKey, GameDataBackend.localFiles.storageKey);
   }
 
+  /// Kept for compatibility; editing storage is always local.
   Future<void> setBackend(GameDataBackend backend) async {
-    _backend = backend;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_prefKey, backend.storageKey);
+    await prefs.setString(_prefKey, GameDataBackend.localFiles.storageKey);
   }
 
   GameDataStorage storageFor(GameDataBackend? override) {
-    final resolved = override ?? _backend;
-    switch (resolved) {
-      case GameDataBackend.localFiles:
-        return LocalGameDataStorage(_fileService);
-      case GameDataBackend.firebase:
-        return _firebaseStorage;
-    }
+    return _localStorage;
   }
 
-  GameDataStorage get activeStorage => storageFor(null);
+  GameDataStorage get activeStorage => _localStorage;
 }

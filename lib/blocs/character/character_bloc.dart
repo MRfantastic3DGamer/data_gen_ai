@@ -1,5 +1,6 @@
 import 'package:data_gen_ai/blocs/character/character_event.dart';
 import 'package:data_gen_ai/blocs/character/character_state.dart';
+import 'package:data_gen_ai/core/so_type_registry.dart';
 import 'package:data_gen_ai/models/character_data.dart';
 import 'package:data_gen_ai/repositories/project_repository.dart';
 import 'package:data_gen_ai/services/json_converter.dart';
@@ -44,16 +45,47 @@ class CharacterBloc extends Bloc<CharacterEvent, CharacterState> {
     CharacterSaved event,
     Emitter<CharacterState> emit,
   ) async {
+    final trimmedName = event.fileName.trim();
+    if (trimmedName.isEmpty) {
+      emit(
+        state.copyWith(
+          error: 'Enter a file name before saving.',
+          saved: false,
+        ),
+      );
+      return;
+    }
+
     try {
-      final envelope = await _projectRepository.loadEnvelope(event.path);
+      final path = event.path ?? await _createCharacterPath(trimmedName);
+      final envelope = await _projectRepository.loadEnvelope(path);
+
       await _projectRepository.savePayload(
-        path: event.path,
+        path: path,
         baseEnvelope: envelope,
         payload: state.data.toJson(),
+        name: _baseName(trimmedName),
       );
-      emit(state.copyWith(saved: true));
+      emit(state.copyWith(path: path, saved: true, clearError: true));
     } catch (e) {
       emit(state.copyWith(error: e.toString(), saved: false));
     }
+  }
+
+  String _baseName(String fileName) {
+    return fileName.endsWith('.json')
+        ? fileName.substring(0, fileName.length - 5)
+        : fileName;
+  }
+
+  Future<String> _createCharacterPath(String fileName) async {
+    final typeInfo = SOTypeRegistry.all.firstWhere(
+      (t) => t.key == 'CharacterData',
+    );
+    return _projectRepository.createNewFile(
+      typeInfo: typeInfo,
+      objectName: _baseName(fileName),
+      payload: state.data.toJson(),
+    );
   }
 }

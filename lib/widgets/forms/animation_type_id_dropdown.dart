@@ -1,3 +1,4 @@
+import 'package:data_gen_ai/core/theme/form_spacing.dart';
 import 'package:data_gen_ai/models/asset_picker_option.dart';
 import 'package:data_gen_ai/services/registry_catalog_service.dart';
 import 'package:data_gen_ai/widgets/forms/searchable_int_dropdown.dart';
@@ -28,9 +29,15 @@ class AnimationTypeIdDropdown extends StatelessWidget {
       factionId: factionId,
     );
     if (registryOptions.length <= 1) {
-      return ListTile(
-        title: Text(label),
-        subtitle: const Text('No AnimationTypesConfig found for this faction.'),
+      return Padding(
+        padding: FormSpacing.fieldPadding,
+        child: ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(label),
+          subtitle: const Text(
+            'No AnimationTypesConfig found for this faction.',
+          ),
+        ),
       );
     }
 
@@ -44,11 +51,14 @@ class AnimationTypeIdDropdown extends StatelessWidget {
         )
         .toList();
 
-    return SearchableIntDropdown(
-      label: label,
-      value: value,
-      options: options,
-      onChanged: onChanged,
+    return Padding(
+      padding: FormSpacing.fieldPadding,
+      child: SearchableIntDropdown(
+        label: label,
+        value: value,
+        options: options,
+        onChanged: onChanged,
+      ),
     );
   }
 }
