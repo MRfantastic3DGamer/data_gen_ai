@@ -1,8 +1,8 @@
 import 'package:data_gen_ai/graph_editor/registry/node_registry.dart';
 import 'package:data_gen_ai/graph_editor/state/graph_editor_cubit.dart';
 import 'package:data_gen_ai/graph_editor/state/graph_editor_state.dart';
+import 'package:data_gen_ai/graph_editor/ui/widgets/string_dropdown_field.dart';
 import 'package:data_gen_ai/widgets/forms/bool_toggle.dart';
-import 'package:data_gen_ai/widgets/forms/enum_dropdown.dart';
 import 'package:data_gen_ai/widgets/forms/float_field.dart';
 import 'package:data_gen_ai/widgets/forms/int_field.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
@@ -179,7 +179,7 @@ class _SensedAgentQueryOptions extends StatelessWidget {
         children: <Widget>[
           IntField(
             label: 'Agent Faction',
-            value: (_query['AgentFaction'] as num?)?.toInt() ?? 0,
+            initialValue: (_query['AgentFaction'] as num?)?.toInt() ?? 0,
             onChanged: (v) => _update(context, 'AgentFaction', v),
           ),
           BoolToggle(
@@ -202,28 +202,26 @@ class _SensedAgentQueryOptions extends StatelessWidget {
             value: _query['InLineOfSight'] as bool? ?? true,
             onChanged: (v) => _update(context, 'InLineOfSight', v),
           ),
-          EnumDropdown<String>(
+          StringDropdownField(
             label: 'Mode',
             value: _query['Mode'] as String? ?? 'Nearest',
-            items: const <String>[
+            options: const <String>[
               'Nearest',
               'Farthest',
               'Random',
               'HighestPerceivedPower',
             ],
-            itemLabel: (v) => v,
             onChanged: (v) => _update(context, 'Mode', v),
           ),
-          EnumDropdown<String>(
+          StringDropdownField(
             label: 'Perceived Power Aggregation',
             value: _query['PerceivedPowerAggregation'] as String? ?? 'Average',
-            items: const <String>['Average', 'Max', 'Min', 'Sum'],
-            itemLabel: (v) => v,
+            options: const <String>['Average', 'Max', 'Min', 'Sum'],
             onChanged: (v) => _update(context, 'PerceivedPowerAggregation', v),
           ),
           IntField(
             label: 'Trespass Zones',
-            value: (_query['TrespassZones'] as num?)?.toInt() ?? 0,
+            initialValue: (_query['TrespassZones'] as num?)?.toInt() ?? 0,
             onChanged: (v) => _update(context, 'TrespassZones', v),
           ),
         ],
@@ -257,22 +255,24 @@ class _ActionableOptions extends StatelessWidget {
         children: <Widget>[
           FloatField(
             label: 'Const Cost',
-            value: (_actionable['ConstCost'] as num?)?.toDouble() ?? 0,
+            initialValue: (_actionable['ConstCost'] as num?)?.toDouble() ?? 0,
             onChanged: (v) => _update(context, 'ConstCost', v),
           ),
           FloatField(
             label: 'Cost Field Multiplier',
-            value: (_actionable['CostFieldMultiplier'] as num?)?.toDouble() ?? 1,
+            initialValue:
+                (_actionable['CostFieldMultiplier'] as num?)?.toDouble() ?? 1,
             onChanged: (v) => _update(context, 'CostFieldMultiplier', v),
           ),
           FloatField(
             label: 'Const Time',
-            value: (_actionable['ConstTime'] as num?)?.toDouble() ?? 0,
+            initialValue: (_actionable['ConstTime'] as num?)?.toDouble() ?? 0,
             onChanged: (v) => _update(context, 'ConstTime', v),
           ),
           FloatField(
             label: 'Time Field Multiplier',
-            value: (_actionable['TimeFieldMultiplier'] as num?)?.toDouble() ?? 1,
+            initialValue:
+                (_actionable['TimeFieldMultiplier'] as num?)?.toDouble() ?? 1,
             onChanged: (v) => _update(context, 'TimeFieldMultiplier', v),
           ),
         ],
@@ -294,14 +294,15 @@ class _ActuatorOptions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final actuatorType = node.options['ActuatorType'] as String? ?? 'NavigateToPosition';
+    final actuatorType =
+        node.options['ActuatorType'] as String? ?? 'NavigateToPosition';
     return SectionCard(
       title: 'Actuator',
       subtitle: 'Execution strategy for paired actionable',
-      child: EnumDropdown<String>(
+      child: StringDropdownField(
         label: 'Actuator Type',
         value: actuatorType,
-        items: const <String>[
+        options: const <String>[
           'NavigateToPosition',
           'Wait',
           'Eat',
@@ -311,7 +312,6 @@ class _ActuatorOptions extends StatelessWidget {
           'Flee',
           'FollowSchedule',
         ],
-        itemLabel: (v) => v,
         onChanged: (v) => _updateType(context, v),
       ),
     );
@@ -347,7 +347,7 @@ class _ProfileOptions extends StatelessWidget {
           ),
           IntField(
             label: 'Default Action',
-            value: (_profile['DefaultAction'] as num?)?.toInt() ?? -1,
+            initialValue: (_profile['DefaultAction'] as num?)?.toInt() ?? -1,
             onChanged: (v) => _update(context, 'DefaultAction', v),
           ),
           BoolToggle(
@@ -357,12 +357,12 @@ class _ProfileOptions extends StatelessWidget {
           ),
           IntField(
             label: 'Voice Emit Mask',
-            value: (_profile['VoiceEmitMask'] as num?)?.toInt() ?? 1,
+            initialValue: (_profile['VoiceEmitMask'] as num?)?.toInt() ?? 1,
             onChanged: (v) => _update(context, 'VoiceEmitMask', v),
           ),
           IntField(
             label: 'Voice Listen Mask',
-            value: (_profile['VoiceListenMask'] as num?)?.toInt() ?? 1,
+            initialValue: (_profile['VoiceListenMask'] as num?)?.toInt() ?? 1,
             onChanged: (v) => _update(context, 'VoiceListenMask', v),
           ),
           BoolToggle(

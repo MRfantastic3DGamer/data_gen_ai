@@ -53,7 +53,7 @@ class _GraphEditorScreenState extends State<GraphEditorScreen> {
             current.connectionError != null,
         listener: (context, state) {
           if (state.connectionError != null) {
-            AppSnackBar.show(context, state.connectionError!);
+            AppSnackBar.showError(context, state.connectionError!);
           }
           if (_nameController.text != state.document.graphName) {
             _nameController.text = state.document.graphName;

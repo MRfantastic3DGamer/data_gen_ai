@@ -5,6 +5,7 @@ import 'package:data_gen_ai/graph_editor/models/graph_edge.dart';
 import 'package:data_gen_ai/graph_editor/models/graph_node.dart';
 import 'package:data_gen_ai/graph_editor/models/graph_position.dart';
 import 'package:data_gen_ai/graph_editor/models/port_definition.dart';
+import 'package:data_gen_ai/graph_editor/models/port_type.dart';
 import 'package:data_gen_ai/graph_editor/registry/node_registry.dart';
 import 'package:uuid/uuid.dart';
 

@@ -63,7 +63,7 @@ class _GraphListScreenState extends State<GraphListScreen> {
       context.push('/graphs/edit', extra: key);
     } catch (error) {
       if (!mounted) return;
-      AppSnackBar.show(context, 'Failed to create graph: $error');
+      AppSnackBar.showError(context, 'Failed to create graph: $error');
     }
   }
 
@@ -90,7 +90,7 @@ class _GraphListScreenState extends State<GraphListScreen> {
     await context.read<GraphFileService>().deleteGraph(info.key);
     if (!mounted) return;
     setState(_reload);
-    AppSnackBar.show(context, 'Deleted ${info.graphName}');
+    AppSnackBar.showSuccess(context, 'Deleted ${info.graphName}');
   }
 
   @override
@@ -122,8 +122,8 @@ class _GraphListScreenState extends State<GraphListScreen> {
           if (snapshot.hasError) {
             return EmptyState(
               icon: Icons.error_outline,
-              title: 'Could not load graphs',
-              subtitle: snapshot.error.toString(),
+              message:
+                  'Could not load graphs.\n\n${snapshot.error}',
             );
           }
 
@@ -131,9 +131,8 @@ class _GraphListScreenState extends State<GraphListScreen> {
           if (graphs.isEmpty) {
             return EmptyState(
               icon: Icons.hub_outlined,
-              title: 'No graphs yet',
-              subtitle:
-                  'Create a character design graph to author beliefs, actions, and actuators.',
+              message:
+                  'No graphs yet.\n\nCreate a character design graph to author beliefs, actions, and actuators.',
               actionLabel: 'Create graph',
               onAction: _createGraph,
             );
