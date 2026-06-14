@@ -3,11 +3,14 @@ import 'package:data_gen_ai/graph_editor/state/graph_editor_state.dart';
 import 'package:data_gen_ai/graph_editor/ui/canvas/graph_edge_painter.dart';
 import 'package:data_gen_ai/graph_editor/ui/canvas/graph_layout.dart';
 import 'package:data_gen_ai/graph_editor/ui/canvas/graph_node_widget.dart';
+import 'package:data_gen_ai/graph_editor/ui/widgets/graph_mobile_chrome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class GraphCanvas extends StatefulWidget {
-  const GraphCanvas({super.key});
+  const GraphCanvas({super.key, this.showHelpBanner = true});
+
+  final bool showHelpBanner;
 
   @override
   State<GraphCanvas> createState() => _GraphCanvasState();
@@ -36,16 +39,25 @@ class _GraphCanvasState extends State<GraphCanvas> {
     return BlocBuilder<GraphEditorCubit, GraphEditorState>(
       builder: (context, state) {
         final colorScheme = Theme.of(context).colorScheme;
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            return InteractiveViewer(
+        final portRowHeight = GraphLayoutMetrics.portRowHeight(context);
+
+        return Stack(
+          children: <Widget>[
+            InteractiveViewer(
               transformationController: _transformController,
               minScale: 0.35,
               maxScale: 2.5,
               boundaryMargin: const EdgeInsets.all(1200),
               child: GestureDetector(
                 behavior: HitTestBehavior.translucent,
-                onTap: () => context.read<GraphEditorCubit>().clearSelection(),
+                onTap: () {
+                  final cubit = context.read<GraphEditorCubit>();
+                  if (cubit.state.pendingConnection != null) {
+                    cubit.cancelConnection();
+                  } else {
+                    cubit.clearSelection();
+                  }
+                },
                 child: SizedBox(
                   width: 4000,
                   height: 3000,
@@ -59,6 +71,7 @@ class _GraphCanvasState extends State<GraphCanvas> {
                           selectedEdge: null,
                           pendingConnection: state.pendingConnection,
                           colorScheme: colorScheme,
+                          portRowHeight: portRowHeight,
                         ),
                       ),
                       ...state.document.nodes.map((node) {
@@ -88,8 +101,11 @@ class _GraphCanvasState extends State<GraphCanvas> {
                   ),
                 ),
               ),
-            );
-          },
+            ),
+            if (widget.showHelpBanner &&
+                GraphLayoutMetrics.isMobile(context))
+              const GraphMobileHelpBanner(),
+          ],
         );
       },
     );

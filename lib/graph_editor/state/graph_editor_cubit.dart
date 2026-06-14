@@ -2,12 +2,15 @@ import 'dart:ui';
 
 import 'package:data_gen_ai/graph_editor/logic/graph_editor_logic.dart';
 import 'package:data_gen_ai/graph_editor/models/graph_block.dart';
+import 'package:data_gen_ai/graph_editor/models/graph_context.dart';
 import 'package:data_gen_ai/graph_editor/models/graph_document.dart';
 import 'package:data_gen_ai/graph_editor/models/graph_edge.dart';
 import 'package:data_gen_ai/graph_editor/models/graph_node.dart';
 import 'package:data_gen_ai/graph_editor/models/graph_position.dart';
+import 'package:data_gen_ai/graph_editor/models/port_definition.dart';
 import 'package:data_gen_ai/graph_editor/services/graph_file_service.dart';
 import 'package:data_gen_ai/graph_editor/state/graph_editor_state.dart';
+import 'package:data_gen_ai/graph_editor/ui/canvas/graph_layout.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class GraphEditorCubit extends Cubit<GraphEditorState> {
@@ -37,7 +40,6 @@ class GraphEditorCubit extends Cubit<GraphEditorState> {
         selectedNodeId: nodeId,
         selectedBlockId: null,
         selectedBlockParentId: null,
-        clearPendingConnection: true,
         clearConnectionError: true,
       ),
     );
@@ -49,7 +51,6 @@ class GraphEditorCubit extends Cubit<GraphEditorState> {
         selectedNodeId: null,
         selectedBlockId: blockId,
         selectedBlockParentId: parentNodeId,
-        clearPendingConnection: true,
         clearConnectionError: true,
       ),
     );
@@ -258,6 +259,34 @@ class GraphEditorCubit extends Cubit<GraphEditorState> {
         clearPendingConnection: true,
         clearConnectionError: true,
       ),
+    );
+  }
+
+  void tryCompleteConnectionAt(
+    Offset worldPoint, {
+    double hitRadius = 16,
+    double portRowHeight = GraphLayoutMetrics.portRowHeightDesktop,
+  }) {
+    final pending = state.pendingConnection;
+    if (pending == null) return;
+
+    final hit = GraphLayoutCalculator.findPortAt(
+      state.document,
+      worldPoint,
+      hitRadius: hitRadius,
+      portRowHeight: portRowHeight,
+    );
+    if (hit == null) return;
+
+    if (hit.nodeId == pending.nodeId && hit.port.name == pending.portName) {
+      cancelConnection();
+      return;
+    }
+
+    completeConnection(
+      nodeId: hit.nodeId,
+      portName: hit.port.name,
+      isOutput: hit.port.direction == PortDirection.output,
     );
   }
 

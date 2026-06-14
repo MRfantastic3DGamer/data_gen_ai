@@ -8,7 +8,8 @@ class GraphPortWidget extends StatelessWidget {
     super.key,
     required this.port,
     required this.isActive,
-    required this.onTapDown,
+    required this.isPendingSource,
+    required this.onTap,
     required this.onPanStart,
     required this.onPanUpdate,
     required this.onPanEnd,
@@ -16,70 +17,109 @@ class GraphPortWidget extends StatelessWidget {
 
   final PortDefinition port;
   final bool isActive;
-  final VoidCallback onTapDown;
+  final bool isPendingSource;
+  final VoidCallback onTap;
   final VoidCallback onPanStart;
   final void Function(DragUpdateDetails details) onPanUpdate;
-  final VoidCallback onPanEnd;
+  final void Function(DragEndDetails details) onPanEnd;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isInput = port.direction == PortDirection.input;
+    final rowHeight = GraphLayoutMetrics.portRowHeight(context);
+    final highlight = isActive || isPendingSource;
 
-    return SizedBox(
-      height: GraphLayoutMetrics.portRowHeight,
-      child: Row(
-        children: <Widget>[
-          if (isInput)
-            _PortDot(
-              color: _portColor(colorScheme, port.type),
-              isActive: isActive,
-              onTapDown: onTapDown,
-              onPanStart: onPanStart,
-              onPanUpdate: onPanUpdate,
-              onPanEnd: onPanEnd,
-            ),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(
-                left: isInput ? 8 : 12,
-                right: isInput ? 12 : 8,
-              ),
-              child: Row(
-                mainAxisAlignment: isInput
-                    ? MainAxisAlignment.start
-                    : MainAxisAlignment.end,
-                children: <Widget>[
-                  Flexible(
-                    child: Text(
-                      port.name,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
+    return Material(
+      color: highlight
+          ? colorScheme.primaryContainer.withValues(alpha: 0.35)
+          : Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: SizedBox(
+          height: rowHeight,
+          child: Row(
+            children: <Widget>[
+              if (isInput) _buildPortHandle(context, colorScheme, highlight),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: isInput ? 4 : 12,
+                    right: isInput ? 12 : 4,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: isInput
+                        ? MainAxisAlignment.start
+                        : MainAxisAlignment.end,
+                    children: <Widget>[
+                      Flexible(
+                        child: Text(
+                          port.name,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            fontWeight: highlight ? FontWeight.w600 : null,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                      const SizedBox(width: 6),
+                      Text(
+                        port.type.label,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: colorScheme.outline,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    port.type.label,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: colorScheme.outline,
-                    ),
-                  ),
-                ],
+                ),
               ),
+              if (!isInput) _buildPortHandle(context, colorScheme, highlight),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPortHandle(
+    BuildContext context,
+    ColorScheme colorScheme,
+    bool highlight,
+  ) {
+    final color = _portColor(colorScheme, port.type);
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      onPanStart: (_) => onPanStart(),
+      onPanUpdate: onPanUpdate,
+      onPanEnd: onPanEnd,
+      child: SizedBox(
+        width: GraphLayoutMetrics.portHitSize,
+        height: GraphLayoutMetrics.portHitSize,
+        child: Center(
+          child: Container(
+            width: GraphLayoutMetrics.portDotSize,
+            height: GraphLayoutMetrics.portDotSize,
+            decoration: BoxDecoration(
+              color: highlight ? color : color.withValues(alpha: 0.85),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: highlight
+                    ? Colors.white
+                    : Colors.white.withValues(alpha: 0.8),
+                width: highlight ? 2 : 1,
+              ),
+              boxShadow: highlight
+                  ? <BoxShadow>[
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.5),
+                        blurRadius: 8,
+                      ),
+                    ]
+                  : null,
             ),
           ),
-          if (!isInput)
-            _PortDot(
-              color: _portColor(colorScheme, port.type),
-              isActive: isActive,
-              onTapDown: onTapDown,
-              onPanStart: onPanStart,
-              onPanUpdate: onPanUpdate,
-              onPanEnd: onPanEnd,
-            ),
-        ],
+        ),
       ),
     );
   }
@@ -94,54 +134,5 @@ class GraphPortWidget extends StatelessWidget {
       PortType.characterProfileGraphData => const Color(0xFF597AB8),
       _ => colorScheme.primary,
     };
-  }
-}
-
-class _PortDot extends StatelessWidget {
-  const _PortDot({
-    required this.color,
-    required this.isActive,
-    required this.onTapDown,
-    required this.onPanStart,
-    required this.onPanUpdate,
-    required this.onPanEnd,
-  });
-
-  final Color color;
-  final bool isActive;
-  final VoidCallback onTapDown;
-  final VoidCallback onPanStart;
-  final void Function(DragUpdateDetails details) onPanUpdate;
-  final VoidCallback onPanEnd;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => onTapDown(),
-      onPanStart: (_) => onPanStart(),
-      onPanUpdate: onPanUpdate,
-      onPanEnd: (_) => onPanEnd(),
-      child: Container(
-        width: GraphLayoutMetrics.portDotSize,
-        height: GraphLayoutMetrics.portDotSize,
-        margin: const EdgeInsets.symmetric(horizontal: 6),
-        decoration: BoxDecoration(
-          color: isActive ? color : color.withValues(alpha: 0.85),
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.8),
-            width: isActive ? 2 : 1,
-          ),
-          boxShadow: isActive
-              ? <BoxShadow>[
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.5),
-                    blurRadius: 8,
-                  ),
-                ]
-              : null,
-        ),
-      ),
-    );
   }
 }

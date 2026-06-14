@@ -12,11 +12,22 @@ class GraphLayoutMetrics {
 
   static const double nodeWidth = 260;
   static const double nodeHeaderHeight = 44;
-  static const double portRowHeight = 28;
-  static const double portDotSize = 12;
+  static const double portRowHeightDesktop = 28;
+  static const double portRowHeightMobile = 44;
+  static const double portDotSize = 14;
+  static const double portHitSize = 44;
   static const double blockHeight = 72;
   static const double blockGap = 8;
   static const double contextPadding = 12;
+
+  static bool isMobile(BuildContext context) =>
+      MediaQuery.sizeOf(context).width < 720;
+
+  static double portRowHeight(BuildContext context) =>
+      isMobile(context) ? portRowHeightMobile : portRowHeightDesktop;
+
+  static double portHitRadius(BuildContext context) =>
+      isMobile(context) ? 28 : 16;
 }
 
 class GraphPortLayout {
@@ -34,12 +45,16 @@ class GraphPortLayout {
 }
 
 class GraphLayoutCalculator {
-  static double nodeHeight(String typeId, Map<String, dynamic> options) {
+  static double nodeHeight(
+    String typeId,
+    Map<String, dynamic> options, {
+    double portRowHeight = portRowHeightDesktop,
+  }) {
     final definition = NodeRegistry.byTypeId(typeId);
     if (definition == null) return GraphLayoutMetrics.nodeHeaderHeight;
     final portCount = definition.resolvePorts(options).length;
     return GraphLayoutMetrics.nodeHeaderHeight +
-        portCount * GraphLayoutMetrics.portRowHeight +
+        portCount * portRowHeight +
         12;
   }
 
@@ -50,6 +65,7 @@ class GraphLayoutCalculator {
     required Map<String, dynamic> options,
     required Offset nodeTopLeft,
     bool isBlock = false,
+    double portRowHeight = GraphLayoutMetrics.portRowHeightDesktop,
   }) {
     final definition = NodeRegistry.byTypeId(typeId);
     if (definition == null) return const <GraphPortLayout>[];
@@ -60,8 +76,8 @@ class GraphLayoutCalculator {
     for (final port in ports) {
       final y = nodeTopLeft.dy +
           GraphLayoutMetrics.nodeHeaderHeight +
-          row * GraphLayoutMetrics.portRowHeight +
-          GraphLayoutMetrics.portRowHeight / 2;
+          row * portRowHeight +
+          portRowHeight / 2;
       final x = port.direction == PortDirection.input
           ? nodeTopLeft.dx
           : nodeTopLeft.dx + GraphLayoutMetrics.nodeWidth;
@@ -86,7 +102,10 @@ class GraphLayoutCalculator {
     return positions;
   }
 
-  static List<GraphPortLayout> allPortLayouts(GraphDocument document) {
+  static List<GraphPortLayout> allPortLayouts(
+    GraphDocument document, {
+    double portRowHeight = GraphLayoutMetrics.portRowHeightDesktop,
+  }) {
     final layouts = <GraphPortLayout>[];
     for (final node in document.nodes) {
       layouts.addAll(
@@ -96,15 +115,26 @@ class GraphLayoutCalculator {
           typeId: node.type,
           options: node.options,
           nodeTopLeft: node.position.toOffset(),
+          portRowHeight: portRowHeight,
         ),
       );
     }
     for (final context in document.contexts) {
       final parent = document.nodeById(context.parentNodeId);
       if (parent == null) continue;
-      var blockYOffset = nodeHeight(parent.type, parent.options) +
+      var blockYOffset = nodeHeight(
+            parent.type,
+            parent.options,
+            portRowHeight: portRowHeight,
+          ) +
           GraphLayoutMetrics.contextPadding;
       for (final block in context.blocks) {
+        final blockDef = NodeRegistry.byTypeId(block.type);
+        final blockPortCount =
+            blockDef?.resolvePorts(block.options).length ?? 0;
+        final blockHeight = GraphLayoutMetrics.nodeHeaderHeight +
+            blockPortCount * portRowHeight +
+            8;
         final blockTopLeft = parent.position.toOffset().translate(
           GraphLayoutMetrics.contextPadding,
           blockYOffset,
@@ -117,9 +147,10 @@ class GraphLayoutCalculator {
             options: block.options,
             nodeTopLeft: blockTopLeft,
             isBlock: true,
+            portRowHeight: portRowHeight,
           ),
         );
-        blockYOffset += GraphLayoutMetrics.blockHeight + GraphLayoutMetrics.blockGap;
+        blockYOffset += blockHeight + GraphLayoutMetrics.blockGap;
       }
     }
     return layouts;
@@ -129,10 +160,14 @@ class GraphLayoutCalculator {
     GraphDocument document,
     Offset worldPoint, {
     double hitRadius = 16,
+    double portRowHeight = GraphLayoutMetrics.portRowHeightDesktop,
   }) {
     GraphPortLayout? closest;
     var closestDistance = double.infinity;
-    for (final layout in allPortLayouts(document)) {
+    for (final layout in allPortLayouts(
+      document,
+      portRowHeight: portRowHeight,
+    )) {
       final distance = (layout.center - worldPoint).distance;
       if (distance <= hitRadius && distance < closestDistance) {
         closest = layout;
@@ -163,17 +198,22 @@ class GraphEdgePainter extends CustomPainter {
     required this.selectedEdge,
     required this.pendingConnection,
     required this.colorScheme,
+    this.portRowHeight = GraphLayoutMetrics.portRowHeightDesktop,
   });
 
   final GraphDocument document;
   final GraphEdge? selectedEdge;
   final PendingConnection? pendingConnection;
   final ColorScheme colorScheme;
+  final double portRowHeight;
 
   @override
   void paint(Canvas canvas, Size size) {
     final portMap = <String, Map<String, Offset>>{};
-    for (final layout in GraphLayoutCalculator.allPortLayouts(document)) {
+    for (final layout in GraphLayoutCalculator.allPortLayouts(
+      document,
+      portRowHeight: portRowHeight,
+    )) {
       portMap.putIfAbsent(layout.nodeId, () => <String, Offset>{})[layout.port.name] =
           layout.center;
     }
@@ -223,6 +263,7 @@ class GraphEdgePainter extends CustomPainter {
   bool shouldRepaint(covariant GraphEdgePainter oldDelegate) {
     return oldDelegate.document != document ||
         oldDelegate.selectedEdge != selectedEdge ||
-        oldDelegate.pendingConnection != pendingConnection;
+        oldDelegate.pendingConnection != pendingConnection ||
+        oldDelegate.portRowHeight != portRowHeight;
   }
 }

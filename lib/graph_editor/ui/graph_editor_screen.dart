@@ -2,8 +2,10 @@ import 'package:data_gen_ai/graph_editor/services/graph_file_service.dart';
 import 'package:data_gen_ai/graph_editor/state/graph_editor_cubit.dart';
 import 'package:data_gen_ai/graph_editor/state/graph_editor_state.dart';
 import 'package:data_gen_ai/graph_editor/ui/canvas/graph_canvas.dart';
+import 'package:data_gen_ai/graph_editor/ui/canvas/graph_layout.dart';
 import 'package:data_gen_ai/graph_editor/ui/panels/node_options_panel.dart';
 import 'package:data_gen_ai/graph_editor/ui/panels/node_palette_panel.dart';
+import 'package:data_gen_ai/graph_editor/ui/widgets/graph_mobile_chrome.dart';
 import 'package:data_gen_ai/widgets/common/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -43,6 +45,58 @@ class _GraphEditorScreenState extends State<GraphEditorScreen> {
     super.dispose();
   }
 
+  void _showPaletteSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.55,
+        minChildSize: 0.35,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) => Column(
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text(
+                'Add node',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const Expanded(child: NodePalettePanel()),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showOptionsSheet(BuildContext context) {
+    final state = _cubit.state;
+    if (state.selectedNodeId == null && state.selectedBlockId == null) {
+      AppSnackBar.showError(context, 'Tap a node on the canvas first.');
+      return;
+    }
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.55,
+        minChildSize: 0.35,
+        maxChildSize: 0.92,
+        builder: (context, scrollController) => const SizedBox(
+          height: 500,
+          child: NodeOptionsPanel(),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider.value(
@@ -60,6 +114,8 @@ class _GraphEditorScreenState extends State<GraphEditorScreen> {
           }
         },
         builder: (context, state) {
+          final isMobile = GraphLayoutMetrics.isMobile(context);
+
           return Scaffold(
             appBar: AppBar(
               title: TextField(
@@ -97,29 +153,55 @@ class _GraphEditorScreenState extends State<GraphEditorScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.save_outlined),
-                  label: const Text('Save'),
+                  label: Text(isMobile ? '' : 'Save'),
                 ),
                 const SizedBox(width: 8),
               ],
             ),
-            body: Row(
-              children: <Widget>[
-                const SizedBox(
-                  width: 260,
-                  child: NodePalettePanel(),
-                ),
-                const VerticalDivider(width: 1),
-                const Expanded(child: GraphCanvas()),
-                const VerticalDivider(width: 1),
-                const SizedBox(
-                  width: 320,
-                  child: NodeOptionsPanel(),
-                ),
-              ],
-            ),
+            body: isMobile ? _buildMobileBody(context) : _buildDesktopBody(context),
           );
         },
       ),
+    );
+  }
+
+  Widget _buildDesktopBody(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        const GraphConnectionBanner(),
+        Expanded(
+          child: Row(
+            children: <Widget>[
+              const SizedBox(
+                width: 260,
+                child: NodePalettePanel(),
+              ),
+              const VerticalDivider(width: 1),
+              const Expanded(child: GraphCanvas(showHelpBanner: false)),
+              const VerticalDivider(width: 1),
+              const SizedBox(
+                width: 320,
+                child: NodeOptionsPanel(),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileBody(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        const GraphConnectionBanner(),
+        const Expanded(
+          child: GraphCanvas(),
+        ),
+        GraphMobileToolbar(
+          onAddNode: () => _showPaletteSheet(context),
+          onEditSelection: () => _showOptionsSheet(context),
+        ),
+      ],
     );
   }
 }
