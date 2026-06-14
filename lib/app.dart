@@ -1,19 +1,12 @@
 import 'package:data_gen_ai/blocs/ai_assistant/ai_assistant_bloc.dart';
-import 'package:data_gen_ai/blocs/character/character_bloc.dart';
-import 'package:data_gen_ai/blocs/game_data/game_data_bloc.dart';
-import 'package:data_gen_ai/blocs/game_data/game_data_event.dart';
-import 'package:data_gen_ai/blocs/generic_so/generic_so_bloc.dart';
-import 'package:data_gen_ai/blocs/item/item_bloc.dart';
-import 'package:data_gen_ai/blocs/project/project_bloc.dart';
-import 'package:data_gen_ai/blocs/project/project_event.dart';
 import 'package:data_gen_ai/core/constants.dart';
 import 'package:data_gen_ai/core/routing/app_router.dart';
 import 'package:data_gen_ai/core/theme/app_theme.dart';
 import 'package:data_gen_ai/core/theme/editor_preferences_scope.dart';
+import 'package:data_gen_ai/graph_editor/services/graph_file_service.dart';
 import 'package:data_gen_ai/repositories/ai_repository.dart';
 import 'package:data_gen_ai/repositories/project_repository.dart';
 import 'package:data_gen_ai/repositories/registry_repository.dart';
-import 'package:data_gen_ai/services/asset_index_service.dart';
 import 'package:data_gen_ai/services/editor_preferences_service.dart';
 import 'package:data_gen_ai/services/file_service.dart';
 import 'package:data_gen_ai/services/game_data_backend_service.dart';
@@ -65,6 +58,7 @@ class _GameDataEditorAppState extends State<GameDataEditorApp> {
       firebaseStorage: widget.backendService.firebaseStorage,
       localStorage: widget.backendService.localStorage,
     );
+    final graphFileService = GraphFileService(widget.backendService);
 
     return MultiRepositoryProvider(
       providers: <RepositoryProvider<dynamic>>[
@@ -73,44 +67,15 @@ class _GameDataEditorAppState extends State<GameDataEditorApp> {
         ),
         RepositoryProvider<GameDataSyncService>.value(value: syncService),
         RepositoryProvider<FileService>.value(value: fileService),
-        RepositoryProvider<AssetIndexService>(
-          create: (c) => AssetIndexService(c.read<FileService>()),
-        ),
         RepositoryProvider<JsonConverterService>.value(value: jsonConverter),
         RepositoryProvider<ProjectRepository>.value(value: projectRepository),
         RepositoryProvider<RegistryCatalogService>.value(value: registryCatalog),
         RepositoryProvider<RegistryRepository>.value(value: registryRepository),
         RepositoryProvider<AIRepository>.value(value: aiRepository),
+        RepositoryProvider<GraphFileService>.value(value: graphFileService),
       ],
       child: MultiBlocProvider(
         providers: <BlocProvider<dynamic>>[
-          BlocProvider<ProjectBloc>(
-            create: (_) {
-              final bloc = ProjectBloc(projectRepository);
-              bloc.add(const ProjectStarted());
-              return bloc;
-            },
-          ),
-          BlocProvider<GameDataBloc>(
-            create: (c) {
-              final bloc = GameDataBloc(
-                projectRepository,
-                registryCatalog,
-                c.read<AssetIndexService>(),
-              );
-              bloc.add(const GameDataStarted());
-              return bloc;
-            },
-          ),
-          BlocProvider<CharacterBloc>(
-            create: (_) => CharacterBloc(projectRepository, jsonConverter),
-          ),
-          BlocProvider<ItemBloc>(
-            create: (_) => ItemBloc(projectRepository, jsonConverter),
-          ),
-          BlocProvider<GenericSOBloc>(
-            create: (_) => GenericSOBloc(projectRepository, jsonConverter),
-          ),
           BlocProvider<AIAssistantBloc>(
             create: (_) => AIAssistantBloc(aiRepository),
           ),

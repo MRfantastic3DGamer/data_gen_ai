@@ -1,5 +1,3 @@
-import 'package:data_gen_ai/blocs/game_data/game_data_bloc.dart';
-import 'package:data_gen_ai/blocs/game_data/game_data_event.dart';
 import 'package:data_gen_ai/core/theme/app_spacing.dart';
 import 'package:data_gen_ai/models/action_catalog_entry_so.dart';
 import 'package:data_gen_ai/models/game_data_tree_node.dart';
@@ -13,7 +11,6 @@ import 'package:data_gen_ai/widgets/forms/int_field.dart';
 import 'package:data_gen_ai/widgets/forms/section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 class ActionsTableScreen extends StatefulWidget {
   const ActionsTableScreen({super.key, required this.catalog});
@@ -74,7 +71,6 @@ class _ActionsTableScreenState extends State<ActionsTableScreen> {
       );
       await widget.catalog.reload(repository);
       if (mounted) {
-        context.read<GameDataBloc>().add(const GameDataReloadRequested());
         _reloadFromCatalog();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Saved ${file.displayName}')),
@@ -111,15 +107,12 @@ class _ActionsTableScreenState extends State<ActionsTableScreen> {
     if (path == null) return;
 
     if (_registry != null && path == _registry!.path) {
-      context.push('/so-edit', extra: path);
       return;
     }
 
     final file = _filesByPath[path];
     if (file != null) {
       setState(() => _selected = file);
-    } else {
-      context.push('/so-edit', extra: path);
     }
   }
 
@@ -151,14 +144,6 @@ class _ActionsTableScreenState extends State<ActionsTableScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Action catalog'),
-        actions: <Widget>[
-          if (hasRegistry)
-            IconButton(
-              tooltip: 'Edit catalog registry',
-              icon: const Icon(Icons.settings_outlined),
-              onPressed: () => context.push('/so-edit', extra: _registry!.path),
-            ),
-        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -293,32 +278,22 @@ class _ActionsTableScreenState extends State<ActionsTableScreen> {
                               selected.model.copyWith(gameplayDisplayName: v),
                             ),
                           ),
-                          Row(
-                            children: <Widget>[
-                              TextButton.icon(
-                                onPressed: () => context.push(
-                                  '/so-edit',
-                                  extra: selected.path,
-                                ),
-                                icon: const Icon(Icons.open_in_new),
-                                label: const Text('Full editor'),
-                              ),
-                              const Spacer(),
-                              FilledButton.tonal(
-                                onPressed: saving
-                                    ? null
-                                    : () => _saveEntry(selected),
-                                child: saving
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Text('Save entry'),
-                              ),
-                            ],
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: FilledButton.tonal(
+                              onPressed: saving
+                                  ? null
+                                  : () => _saveEntry(selected),
+                              child: saving
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text('Save entry'),
+                            ),
                           ),
                         ],
                       ),

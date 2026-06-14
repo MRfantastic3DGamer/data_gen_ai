@@ -1,12 +1,9 @@
-import 'package:data_gen_ai/blocs/game_data/game_data_bloc.dart';
-import 'package:data_gen_ai/blocs/game_data/game_data_state.dart';
 import 'package:data_gen_ai/repositories/project_repository.dart';
 import 'package:data_gen_ai/services/registry_catalog_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Reloads [RegistryCatalogService] when game data finishes loading so registry
-/// screens never read a stale empty catalog.
+/// Reloads [RegistryCatalogService] from project storage for registry screens.
 class RegistryCatalogListener extends StatefulWidget {
   const RegistryCatalogListener({
     super.key,
@@ -32,13 +29,6 @@ class _RegistryCatalogListenerState extends State<RegistryCatalogListener> {
   }
 
   Future<void> _syncCatalog() async {
-    final state = context.read<GameDataBloc>().state;
-    if (state.loading) {
-      if (_catalogReady && mounted) {
-        setState(() => _catalogReady = false);
-      }
-      return;
-    }
     await context.read<RegistryCatalogService>().reload(
       context.read<ProjectRepository>(),
     );
@@ -49,14 +39,8 @@ class _RegistryCatalogListenerState extends State<RegistryCatalogListener> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<GameDataBloc, GameDataState>(
-      listenWhen: (previous, current) =>
-          previous.loading != current.loading ||
-          previous.entries.length != current.entries.length,
-      listener: (context, state) => _syncCatalog(),
-      child: _catalogReady
-          ? widget.child
-          : const Center(child: CircularProgressIndicator()),
-    );
+    return _catalogReady
+        ? widget.child
+        : const Center(child: CircularProgressIndicator());
   }
 }

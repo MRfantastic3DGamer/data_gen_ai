@@ -1,7 +1,3 @@
-import 'package:data_gen_ai/blocs/game_data/game_data_bloc.dart';
-import 'package:data_gen_ai/blocs/game_data/game_data_event.dart';
-import 'package:data_gen_ai/blocs/project/project_bloc.dart';
-import 'package:data_gen_ai/blocs/project/project_event.dart';
 import 'package:data_gen_ai/core/firebase_constants.dart';
 import 'package:data_gen_ai/core/platform_support.dart';
 import 'package:data_gen_ai/core/theme/app_spacing.dart';
@@ -53,8 +49,7 @@ class _DataFolderScreenState extends State<DataFolderScreen> {
   }
 
   void _reloadData() {
-    context.read<GameDataBloc>().add(const GameDataReloadRequested());
-    context.read<ProjectBloc>().add(const ProjectStarted());
+    // Folder changes take effect on next screen load.
   }
 
   Future<void> _requestPermissions() async {

@@ -55,7 +55,7 @@ class HomeScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Text(
-                              'GameData Editor',
+                              'Character Design Editor',
                               style: Theme.of(context)
                                   .textTheme
                                   .headlineSmall
@@ -63,7 +63,7 @@ class HomeScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Edit locally, sync with Firebase when ready',
+                              'Author character design graphs and export JSON for Unity',
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyMedium
@@ -85,13 +85,13 @@ class HomeScreen extends StatelessWidget {
             sliver: SliverList(
               delegate: SliverChildListDelegate(<Widget>[
                 NavCard(
-                  title: 'All Game Data',
+                  title: 'Character Design Graphs',
                   subtitle:
-                      'Folder tree of actions, beliefs, characters, catalog, and more',
+                      'Create nodes, wire typed ports, and save graph JSON for Unity import',
                   icon: Icons.account_tree_outlined,
                   iconColor: colorScheme.primary,
                   delayMs: 0,
-                  onTap: () => context.push('/actions'),
+                  onTap: () => context.push('/graphs'),
                 ),
                 NavCard(
                   title: 'Registries',
