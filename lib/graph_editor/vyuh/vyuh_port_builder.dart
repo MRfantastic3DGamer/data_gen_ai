@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:data_gen_ai/graph_editor/models/port_definition.dart';
 import 'package:data_gen_ai/graph_editor/models/port_type.dart';
 import 'package:data_gen_ai/graph_editor/models/structural_ports.dart';
