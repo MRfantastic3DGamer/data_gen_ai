@@ -6,7 +6,7 @@ import 'package:data_gen_ai/graph_editor/ui/panels/node_options_panel.dart';
 import 'package:data_gen_ai/graph_editor/ui/panels/node_palette_panel.dart';
 import 'package:data_gen_ai/graph_editor/ui/sheets/graph_options_sheet.dart';
 import 'package:data_gen_ai/graph_editor/ui/sheets/graph_palette_sheet.dart';
-import 'package:data_gen_ai/graph_editor/ui/vyuh_graph_canvas.dart';
+import 'package:data_gen_ai/graph_editor/ui/node_editor_canvas.dart';
 import 'package:data_gen_ai/graph_editor/ui/widgets/graph_mobile_chrome.dart';
 import 'package:data_gen_ai/widgets/common/app_snackbar.dart';
 import 'package:flutter/material.dart';
@@ -171,14 +171,14 @@ class _GraphEditorScreenState extends State<GraphEditorScreen> {
 
 enum _CompactMenuAction { save, rename, fit, delete }
 
-/// Keeps [VyuhGraphCanvas] mounted across cubit state updates so node drag and
+/// Keeps [NodeEditorCanvas] mounted across cubit state updates so node drag and
 /// port gestures are not interrupted by selection or document rebuilds.
 class _StableGraphCanvas extends StatelessWidget {
   const _StableGraphCanvas();
 
   @override
   Widget build(BuildContext context) {
-    return const VyuhGraphCanvas();
+    return const NodeEditorCanvas();
   }
 }
 

@@ -2,95 +2,41 @@ import 'dart:ui';
 
 import 'package:data_gen_ai/graph_editor/logic/graph_editor_logic.dart';
 import 'package:data_gen_ai/graph_editor/models/graph_document.dart';
-import 'package:data_gen_ai/graph_editor/models/graph_node_data.dart';
+import 'package:data_gen_ai/graph_editor/models/graph_node.dart';
+import 'package:data_gen_ai/graph_editor/node_editor/node_editor_graph_adapter.dart';
 import 'package:data_gen_ai/graph_editor/services/graph_file_service.dart';
 import 'package:data_gen_ai/graph_editor/state/graph_editor_state.dart';
-import 'package:data_gen_ai/graph_editor/vyuh/vyuh_connection_validator.dart';
-import 'package:data_gen_ai/graph_editor/vyuh/vyuh_graph_adapter.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:vyuh_node_flow/vyuh_node_flow.dart' as vyuh;
+import 'package:node_editor/node_editor.dart';
 
 class GraphEditorCubit extends Cubit<GraphEditorState> {
   GraphEditorCubit(this._fileService, {GraphDocument? document, String? fileKey})
-    : _controller = VyuhGraphAdapter.controllerFromDocument(
-        document ?? GraphDocument.empty(),
-      ),
+    : _controller = NodeEditorController(),
       super(
         GraphEditorState.initial(
           document: document ?? GraphDocument.empty(),
           fileKey: fileKey,
         ),
       ) {
-    _events = _createEvents();
+    _controller.addListener(_onControllerChanged);
+    _loadIntoController(state.document);
   }
 
   final GraphFileService _fileService;
-  late final vyuh.NodeFlowController<GraphNodeData, dynamic> _controller;
-  late final vyuh.NodeFlowEvents<GraphNodeData, dynamic> _events;
+  final NodeEditorController _controller;
+  bool _suppressControllerSync = false;
 
-  vyuh.NodeFlowController<GraphNodeData, dynamic> get controller => _controller;
-  vyuh.NodeFlowEvents<GraphNodeData, dynamic> get events => _events;
+  NodeEditorController get controller => _controller;
 
-  vyuh.NodeFlowEvents<GraphNodeData, dynamic> _createEvents() {
-    return vyuh.NodeFlowEvents<GraphNodeData, dynamic>(
-      onSelectionChange: (selection) {
-        final selected =
-            selection.nodes.isEmpty ? null : selection.nodes.first.id;
-        emit(
-          state.copyWith(
-            selectedNodeId: selected,
-            clearConnectionError: true,
-          ),
-        );
-      },
-      connection: vyuh.ConnectionEvents<GraphNodeData, dynamic>(
-        onBeforeComplete: (context) {
-          return VyuhConnectionValidator.validate(context, state.document);
-        },
-        onCreated: (connection) {
-          final document = VyuhConnectionValidator.documentWithConnection(
-            state.document,
-            connection,
-          );
-          emit(state.copyWith(document: document, isDirty: true, clearConnectionError: true));
-        },
-        onDeleted: (connection) {
-          final document = VyuhConnectionValidator.documentWithoutConnection(
-            state.document,
-            connection,
-          );
-          emit(state.copyWith(document: document, isDirty: true));
-        },
-      ),
-      node: vyuh.NodeEvents<GraphNodeData>(
-        onDragStop: (node) {
-          _syncDocumentFromController(markDirty: true);
-        },
-        onDeleted: (node) {
-          final document = GraphEditorLogic.removeNode(state.document, node.id);
-          emit(
-            state.copyWith(
-              document: document,
-              isDirty: true,
-              clearSelection: node.id == state.selectedNodeId,
-            ),
-          );
-        },
-      ),
-    );
+  void attachFocusNode(FocusNode focusNode) {
+    _controller.focusNode = focusNode;
   }
 
   void load(GraphDocument document, String fileKey) {
-    final migrated = VyuhGraphAdapter.migrateLegacyContexts(document);
-    _controller.loadGraph(
-      vyuh.NodeGraph<GraphNodeData, dynamic>(
-        nodes: migrated.nodes.map(VyuhGraphAdapter.vyuhNodeFromGraphNode).toList(),
-        connections: migrated.edges.map(VyuhGraphAdapter.connectionFromEdge).toList(),
-      ),
-    );
-    emit(
-      GraphEditorState.initial(document: migrated, fileKey: fileKey),
-    );
+    final migrated = NodeEditorGraphAdapter.migrateLegacyContexts(document);
+    _loadIntoController(migrated);
+    emit(GraphEditorState.initial(document: migrated, fileKey: fileKey));
   }
 
   void setGraphName(String name) {
@@ -104,11 +50,12 @@ class GraphEditorCubit extends Cubit<GraphEditorState> {
 
   void selectNode(String? nodeId) {
     if (nodeId == null) {
-      _controller.clearSelection();
+      _controller.nodesManager.unselectAllNodes();
+      _controller.notify();
       emit(state.copyWith(clearSelection: true, clearConnectionError: true));
       return;
     }
-    _controller.selectNode(nodeId);
+    _controller.selectNodeAction(nodeId);
     emit(state.copyWith(selectedNodeId: nodeId, clearConnectionError: true));
   }
 
@@ -117,7 +64,7 @@ class GraphEditorCubit extends Cubit<GraphEditorState> {
   }
 
   String addNodeAtViewportCenter(String typeId, {bool isBlock = false}) {
-    final center = _controller.getViewportCenter();
+    final center = NodeEditorGraphAdapter.viewportCenter(_controller);
     final count = state.document.nodes.length;
     final position = Offset(
       center.dx + (count % 4) * 28,
@@ -127,36 +74,38 @@ class GraphEditorCubit extends Cubit<GraphEditorState> {
   }
 
   void fitGraphToView() {
-    _controller.fitToView();
+    NodeEditorGraphAdapter.fitToView(_controller);
   }
 
   String _addNode(String typeId, Offset position) {
-    final node = VyuhGraphAdapter.createVyuhNode(typeId, position);
-    _controller.addNode(node);
-    final document = GraphEditorLogic.addNode(
-      state.document,
-      node.data.toGraphNode(
-        id: node.id,
-        x: position.dx,
-        y: position.dy,
-      ),
+    final graphNode = NodeEditorGraphAdapter.createGraphNode(typeId, position);
+    NodeEditorGraphAdapter.addNode(
+      _controller,
+      graphNode,
+      onConnect: _validateConnection,
     );
+
+    final document = GraphEditorLogic.addNode(state.document, graphNode);
     emit(
       state.copyWith(
         document: document,
         isDirty: true,
-        selectedNodeId: node.id,
+        selectedNodeId: graphNode.id,
       ),
     );
-    _controller.selectNode(node.id);
-    _controller.animateToNode(node.id);
-    return node.id;
+    NodeEditorGraphAdapter.scrollToNode(_controller, graphNode.id);
+    return graphNode.id;
   }
 
   void removeSelected() {
     final nodeId = state.selectedNodeId;
     if (nodeId == null) return;
-    _controller.removeNode(nodeId);
+
+    _suppressControllerSync = true;
+    _controller.nodesManager.removeNode(_controller.connectionsManager, nodeId);
+    _controller.notify();
+    _suppressControllerSync = false;
+
     final document = GraphEditorLogic.removeNode(state.document, nodeId);
     emit(
       state.copyWith(
@@ -168,56 +117,138 @@ class GraphEditorCubit extends Cubit<GraphEditorState> {
   }
 
   void updateNodeOptions(String nodeId, Map<String, dynamic> options) {
-    final node = _controller.getNode(nodeId);
-    if (node == null) return;
+    final existing = state.document.nodeById(nodeId);
+    if (existing == null) return;
 
-    node.data.options
-      ..clear()
-      ..addAll(options);
-    VyuhGraphAdapter.refreshNodePorts(node);
-    _controller.setNodePorts(nodeId, List<vyuh.Port>.from(node.ports));
-    _controller.setNodeSize(nodeId, node.size.value);
-
-    final nodes = state.document.nodes.map((graphNode) {
-      if (graphNode.id != nodeId) return graphNode;
-      return graphNode.copyWith(options: Map<String, dynamic>.from(options));
+    final updated = existing.copyWith(
+      options: Map<String, dynamic>.from(options),
+    );
+    final nodes = state.document.nodes.map((node) {
+      if (node.id != nodeId) return node;
+      return updated;
     }).toList();
-    emit(
-      state.copyWith(
-        document: state.document.copyWith(nodes: nodes),
-        isDirty: true,
-      ),
-    );
-  }
 
-  void _syncDocumentFromController({bool markDirty = false}) {
-    final document = VyuhGraphAdapter.documentFromController(
+    final document = state.document.copyWith(nodes: nodes);
+    emit(state.copyWith(document: document, isDirty: true));
+
+    _suppressControllerSync = true;
+    NodeEditorGraphAdapter.replaceNode(
       _controller,
-      graphName: state.document.graphName,
+      updated,
+      onConnect: _validateConnection,
     );
-    emit(
-      state.copyWith(
-        document: document,
-        isDirty: markDirty ? true : state.isDirty,
-      ),
-    );
+    _suppressControllerSync = false;
   }
 
   Future<void> save() async {
     final key = state.fileKey;
     if (key == null) return;
     emit(state.copyWith(isSaving: true));
-    final document = VyuhGraphAdapter.documentFromController(
+    final document = NodeEditorGraphAdapter.documentFromController(
       _controller,
       graphName: state.document.graphName,
+      base: state.document,
     );
     await _fileService.saveGraph(key, document);
     emit(state.copyWith(document: document, isSaving: false, isDirty: false));
   }
 
+  bool _validateConnection({
+    required String fromNodeId,
+    required String fromPort,
+    required String toNodeId,
+    required String toPort,
+  }) {
+    final validation = GraphEditorLogic.validateConnection(
+      doc: state.document,
+      fromNodeId: fromNodeId,
+      fromPort: fromPort,
+      toNodeId: toNodeId,
+      toPort: toPort,
+    );
+
+    if (!validation.isValid) {
+      emit(state.copyWith(connectionError: validation.reason));
+      return false;
+    }
+
+    final document = GraphEditorLogic.addEdge(
+      state.document,
+      fromNodeId: fromNodeId,
+      fromPort: fromPort,
+      toNodeId: toNodeId,
+      toPort: toPort,
+    );
+    emit(
+      state.copyWith(
+        document: document,
+        isDirty: true,
+        clearConnectionError: true,
+      ),
+    );
+    return true;
+  }
+
+  void _loadIntoController(GraphDocument document) {
+    _suppressControllerSync = true;
+    NodeEditorGraphAdapter.loadDocument(
+      _controller,
+      document,
+      onConnect: _validateConnection,
+    );
+    _suppressControllerSync = false;
+  }
+
+  void _onControllerChanged() {
+    if (_suppressControllerSync || isClosed) return;
+    if (_controller.startPointConnection != null) return;
+
+    final selected = _controller.selecteds.isEmpty
+        ? null
+        : _controller.selecteds.first;
+
+    final document = NodeEditorGraphAdapter.documentFromController(
+      _controller,
+      graphName: state.document.graphName,
+      base: state.document,
+    );
+
+    final nodeCountChanged = document.nodes.length != state.document.nodes.length;
+    final edgeCountChanged = document.edges.length != state.document.edges.length;
+    final selectionChanged = selected != state.selectedNodeId;
+
+    if (!nodeCountChanged && !edgeCountChanged && !selectionChanged) {
+      if (_positionsChanged(document)) {
+        emit(state.copyWith(document: document, isDirty: true));
+      }
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        document: document,
+        isDirty: nodeCountChanged || edgeCountChanged ? true : state.isDirty,
+        selectedNodeId: selected,
+        clearSelection: selected == null,
+      ),
+    );
+  }
+
+  bool _positionsChanged(GraphDocument document) {
+    for (final node in document.nodes) {
+      final previous = state.document.nodeById(node.id);
+      if (previous == null) continue;
+      if (previous.position.x != node.position.x ||
+          previous.position.y != node.position.y) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @override
   Future<void> close() {
-    _controller.dispose();
+    _controller.removeListener(_onControllerChanged);
     return super.close();
   }
 }

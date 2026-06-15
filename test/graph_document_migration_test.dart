@@ -4,8 +4,8 @@ import 'package:data_gen_ai/graph_editor/models/graph_document.dart';
 import 'package:data_gen_ai/graph_editor/models/graph_node.dart';
 import 'package:data_gen_ai/graph_editor/models/graph_position.dart';
 import 'package:data_gen_ai/graph_editor/models/structural_ports.dart';
+import 'package:data_gen_ai/graph_editor/node_editor/graph_document_migration.dart';
 import 'package:data_gen_ai/graph_editor/registry/node_registry.dart';
-import 'package:data_gen_ai/graph_editor/vyuh/vyuh_graph_adapter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -28,7 +28,7 @@ void main() {
       ],
     );
 
-    final migrated = VyuhGraphAdapter.migrateLegacyContexts(legacy);
+    final migrated = GraphDocumentMigration.migrateLegacyContexts(legacy);
 
     expect(migrated.contexts, isEmpty);
     expect(migrated.nodes, hasLength(2));
