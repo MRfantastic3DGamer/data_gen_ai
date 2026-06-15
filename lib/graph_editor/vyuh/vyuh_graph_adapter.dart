@@ -11,7 +11,7 @@ import 'package:data_gen_ai/graph_editor/registry/node_registry.dart';
 import 'package:data_gen_ai/graph_editor/vyuh/vyuh_port_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
-import 'package:vyuh_node_flow/vyuh_node_flow.dart';
+import 'package:vyuh_node_flow/vyuh_node_flow.dart' hide GraphPosition;
 
 abstract final class VyuhGraphAdapter {
   static const _uuid = Uuid();

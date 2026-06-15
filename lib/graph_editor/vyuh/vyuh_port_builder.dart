@@ -1,22 +1,26 @@
 import 'package:data_gen_ai/graph_editor/models/port_definition.dart';
+import 'package:data_gen_ai/graph_editor/models/port_type.dart';
 import 'package:data_gen_ai/graph_editor/models/structural_ports.dart';
 import 'package:data_gen_ai/graph_editor/registry/node_registry.dart';
-import 'package:vyuh_node_flow/vyuh_node_flow.dart';
+import 'package:vyuh_node_flow/vyuh_node_flow.dart' as vyuh;
 
 abstract final class VyuhPortBuilder {
-  static List<Port> buildPorts(String unityTypeId, Map<String, dynamic> options) {
+  static List<vyuh.Port> buildPorts(
+    String unityTypeId,
+    Map<String, dynamic> options,
+  ) {
     final definition = NodeRegistry.byTypeId(unityTypeId);
-    if (definition == null) return const <Port>[];
+    if (definition == null) return <vyuh.Port>[];
 
-    final ports = <Port>[];
+    final ports = <vyuh.Port>[];
 
     if (definition.isBlockNode) {
       ports.add(
-        const Port(
+        vyuh.Port(
           id: StructuralPorts.block,
           name: StructuralPorts.block,
-          type: PortType.input,
-          position: PortPosition.top,
+          type: vyuh.PortType.input,
+          position: vyuh.PortPosition.top,
           tooltip: 'Connect from a context node Blocks port',
         ),
       );
@@ -24,15 +28,15 @@ abstract final class VyuhPortBuilder {
 
     for (final portDef in definition.resolvePorts(options)) {
       ports.add(
-        Port(
+        vyuh.Port(
           id: portDef.name,
           name: portDef.name,
           type: portDef.direction == PortDirection.input
-              ? PortType.input
-              : PortType.output,
+              ? vyuh.PortType.input
+              : vyuh.PortType.output,
           position: portDef.direction == PortDirection.input
-              ? PortPosition.left
-              : PortPosition.right,
+              ? vyuh.PortPosition.left
+              : vyuh.PortPosition.right,
           multiConnections: portDef.multiCapacity,
           tooltip: portDef.type.label,
         ),
@@ -41,11 +45,11 @@ abstract final class VyuhPortBuilder {
 
     if (definition.isContextNode) {
       ports.add(
-        const Port(
+        vyuh.Port(
           id: StructuralPorts.blocks,
           name: StructuralPorts.blocks,
-          type: PortType.output,
-          position: PortPosition.bottom,
+          type: vyuh.PortType.output,
+          position: vyuh.PortPosition.bottom,
           multiConnections: true,
           tooltip: 'Attach block nodes below this context',
         ),

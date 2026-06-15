@@ -1,4 +1,5 @@
 import 'package:data_gen_ai/graph_editor/models/graph_node_data.dart';
+import 'package:data_gen_ai/graph_editor/models/port_type.dart';
 import 'package:data_gen_ai/graph_editor/registry/node_registry.dart';
 import 'package:flutter/material.dart';
 import 'package:vyuh_node_flow/vyuh_node_flow.dart';
