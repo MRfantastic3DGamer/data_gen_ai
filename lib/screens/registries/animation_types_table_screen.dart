@@ -1,5 +1,3 @@
-import 'package:data_gen_ai/blocs/game_data/game_data_bloc.dart';
-import 'package:data_gen_ai/blocs/game_data/game_data_event.dart';
 import 'package:data_gen_ai/models/animation_types_config_model.dart';
 import 'package:data_gen_ai/repositories/project_repository.dart';
 import 'package:data_gen_ai/repositories/registry_repository.dart';
@@ -53,7 +51,6 @@ class _AnimationTypesTableScreenState extends State<AnimationTypesTableScreen> {
       );
       await widget.catalog.reload(context.read<ProjectRepository>());
       if (mounted) {
-        context.read<GameDataBloc>().add(const GameDataReloadRequested());
         _load(file.path);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Animation types saved')),
