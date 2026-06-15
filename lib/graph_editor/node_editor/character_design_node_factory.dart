@@ -291,7 +291,6 @@ class _DataPortRow extends StatelessWidget {
 
   static Color _portColor(PortType type, Color fallback) {
     return switch (type) {
-      PortType.execution => const Color(0xFFFFFFFF),
       PortType.boolType => const Color(0xFFB24D4D),
       PortType.intType => const Color(0xFF4DB2B2),
       PortType.floatType => const Color(0xFF8FD14F),
