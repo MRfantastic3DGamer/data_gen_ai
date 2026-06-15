@@ -1,11 +1,10 @@
-import 'package:data_gen_ai/graph_editor/models/graph_block.dart';
-import 'package:data_gen_ai/graph_editor/models/graph_context.dart';
 import 'package:data_gen_ai/graph_editor/models/graph_document.dart';
 import 'package:data_gen_ai/graph_editor/models/graph_edge.dart';
 import 'package:data_gen_ai/graph_editor/models/graph_node.dart';
 import 'package:data_gen_ai/graph_editor/models/graph_position.dart';
 import 'package:data_gen_ai/graph_editor/models/port_definition.dart';
 import 'package:data_gen_ai/graph_editor/models/port_type.dart';
+import 'package:data_gen_ai/graph_editor/models/structural_ports.dart';
 import 'package:data_gen_ai/graph_editor/registry/node_registry.dart';
 import 'package:uuid/uuid.dart';
 
@@ -33,25 +32,9 @@ class GraphEditorLogic {
     );
   }
 
-  static GraphBlock createBlock(String typeId) {
-    final definition = NodeRegistry.byTypeId(typeId);
-    return GraphBlock(
-      id: nextId('block'),
-      type: typeId,
-      options: _deepCopyOptions(definition?.defaultOptions ?? const {}),
-    );
-  }
-
   static GraphDocument addNode(GraphDocument doc, GraphNode node) {
     final nodes = List<GraphNode>.from(doc.nodes)..add(node);
-    var contexts = List<GraphContext>.from(doc.contexts);
-    final definition = NodeRegistry.byTypeId(node.type);
-    if (definition?.isContextNode == true &&
-        !contexts.any((c) => c.parentNodeId == node.id)) {
-      contexts = List<GraphContext>.from(contexts)
-        ..add(GraphContext(parentNodeId: node.id));
-    }
-    return doc.copyWith(nodes: nodes, contexts: contexts);
+    return doc.copyWith(nodes: nodes);
   }
 
   static GraphDocument removeNode(GraphDocument doc, String nodeId) {
@@ -59,51 +42,6 @@ class GraphEditorLogic {
       nodes: doc.nodes.where((n) => n.id != nodeId).toList(),
       edges: doc.edges
           .where((e) => e.fromNode != nodeId && e.toNode != nodeId)
-          .toList(),
-      contexts: doc.contexts
-          .where((c) => c.parentNodeId != nodeId)
-          .map(
-            (c) => c.copyWith(
-              blocks: c.blocks.where((b) => b.id != nodeId).toList(),
-            ),
-          )
-          .toList(),
-    );
-  }
-
-  static GraphDocument addBlock(
-    GraphDocument doc,
-    String parentNodeId,
-    GraphBlock block,
-  ) {
-    final contexts = List<GraphContext>.from(doc.contexts);
-    final index = contexts.indexWhere((c) => c.parentNodeId == parentNodeId);
-    if (index < 0) {
-      contexts.add(GraphContext(parentNodeId: parentNodeId, blocks: [block]));
-    } else {
-      final context = contexts[index];
-      contexts[index] = context.copyWith(
-        blocks: List<GraphBlock>.from(context.blocks)..add(block),
-      );
-    }
-    return doc.copyWith(contexts: contexts);
-  }
-
-  static GraphDocument removeBlock(
-    GraphDocument doc,
-    String parentNodeId,
-    String blockId,
-  ) {
-    final contexts = doc.contexts.map((context) {
-      if (context.parentNodeId != parentNodeId) return context;
-      return context.copyWith(
-        blocks: context.blocks.where((b) => b.id != blockId).toList(),
-      );
-    }).toList();
-    return doc.copyWith(
-      contexts: contexts,
-      edges: doc.edges
-          .where((e) => e.fromNode != blockId && e.toNode != blockId)
           .toList(),
     );
   }
@@ -122,17 +60,27 @@ class GraphEditorLogic {
       );
     }
 
-    final from = _resolveElement(doc, fromNodeId);
-    final to = _resolveElement(doc, toNodeId);
-    if (from == null || to == null) {
+    final fromNode = doc.nodeById(fromNodeId);
+    final toNode = doc.nodeById(toNodeId);
+    if (fromNode == null || toNode == null) {
       return const GraphConnectionValidation(
         isValid: false,
-        reason: 'Unknown node or block',
+        reason: 'Unknown node',
       );
     }
 
-    final fromDef = NodeRegistry.byTypeId(from.type);
-    final toDef = NodeRegistry.byTypeId(to.type);
+    if (_isStructuralConnection(fromPort, toPort)) {
+      return _validateStructuralConnection(
+        doc: doc,
+        fromNode: fromNode,
+        toNode: toNode,
+        fromPort: fromPort,
+        toPort: toPort,
+      );
+    }
+
+    final fromDef = NodeRegistry.byTypeId(fromNode.type);
+    final toDef = NodeRegistry.byTypeId(toNode.type);
     if (fromDef == null || toDef == null) {
       return const GraphConnectionValidation(
         isValid: false,
@@ -140,8 +88,8 @@ class GraphEditorLogic {
       );
     }
 
-    final fromPortDef = fromDef.portByName(fromPort, from.options);
-    final toPortDef = toDef.portByName(toPort, to.options);
+    final fromPortDef = fromDef.portByName(fromPort, fromNode.options);
+    final toPortDef = toDef.portByName(toPort, toNode.options);
     if (fromPortDef == null || toPortDef == null) {
       return const GraphConnectionValidation(
         isValid: false,
@@ -202,6 +150,82 @@ class GraphEditorLogic {
     return const GraphConnectionValidation(isValid: true);
   }
 
+  static bool _isStructuralConnection(String fromPort, String toPort) {
+    return fromPort == StructuralPorts.blocks && toPort == StructuralPorts.block;
+  }
+
+  static GraphConnectionValidation _validateStructuralConnection({
+    required GraphDocument doc,
+    required GraphNode fromNode,
+    required GraphNode toNode,
+    required String fromPort,
+    required String toPort,
+  }) {
+    if (fromPort != StructuralPorts.blocks || toPort != StructuralPorts.block) {
+      return const GraphConnectionValidation(
+        isValid: false,
+        reason: 'Invalid structural port pair',
+      );
+    }
+
+    final fromDef = NodeRegistry.byTypeId(fromNode.type);
+    final toDef = NodeRegistry.byTypeId(toNode.type);
+    if (fromDef == null || toDef == null) {
+      return const GraphConnectionValidation(
+        isValid: false,
+        reason: 'Unknown node type',
+      );
+    }
+
+    if (!fromDef.isContextNode) {
+      return const GraphConnectionValidation(
+        isValid: false,
+        reason: 'Blocks port is only on context nodes',
+      );
+    }
+
+    if (!toDef.isBlockNode) {
+      return const GraphConnectionValidation(
+        isValid: false,
+        reason: 'Block port is only on block nodes',
+      );
+    }
+
+    if (toDef.parentContextTypeId != fromNode.type) {
+      return GraphConnectionValidation(
+        isValid: false,
+        reason:
+            '${toDef.displayName} blocks attach to ${NodeRegistry.byTypeId(toDef.parentContextTypeId!)?.displayName ?? 'parent context'}',
+      );
+    }
+
+    final blockOccupied = doc.edges.any(
+      (e) => e.toNode == toNode.id && e.toPort == StructuralPorts.block,
+    );
+    if (blockOccupied) {
+      return const GraphConnectionValidation(
+        isValid: false,
+        reason: 'Block already attached to a context',
+      );
+    }
+
+    final duplicate = doc.edges.any(
+      (e) =>
+          e.fromNode == fromNode.id &&
+          e.fromPort == StructuralPorts.blocks &&
+          e.toNode == toNode.id &&
+          e.toPort == StructuralPorts.block,
+    );
+    if (duplicate) {
+      return const GraphConnectionValidation(
+        isValid: false,
+        reason: 'Connection already exists',
+      );
+    }
+
+    return const GraphConnectionValidation(isValid: true);
+  }
+
   static GraphDocument addEdge(
     GraphDocument doc, {
     required String fromNodeId,
@@ -218,13 +242,23 @@ class GraphEditorLogic {
     );
     if (!validation.isValid) return doc;
 
-    final fromDef = NodeRegistry.byTypeId(
-      _resolveElement(doc, fromNodeId)!.type,
-    )!;
-    final fromPortDef = fromDef.portByName(
-      fromPort,
-      _resolveElement(doc, fromNodeId)!.options,
-    )!;
+    if (_isStructuralConnection(fromPort, toPort)) {
+      return doc.copyWith(
+        edges: List<GraphEdge>.from(doc.edges)
+          ..add(
+            GraphEdge(
+              fromNode: fromNodeId,
+              fromPort: fromPort,
+              toNode: toNodeId,
+              toPort: toPort,
+            ),
+          ),
+      );
+    }
+
+    final fromNode = doc.nodeById(fromNodeId)!;
+    final fromDef = NodeRegistry.byTypeId(fromNode.type)!;
+    final fromPortDef = fromDef.portByName(fromPort, fromNode.options)!;
 
     final normalized = fromPortDef.direction == PortDirection.output
         ? GraphEdge(
@@ -257,19 +291,6 @@ class GraphEditorLogic {
     );
   }
 
-  static _GraphElement? _resolveElement(GraphDocument doc, String id) {
-    final node = doc.nodeById(id);
-    if (node != null) return _GraphElement(type: node.type, options: node.options);
-    for (final context in doc.contexts) {
-      for (final block in context.blocks) {
-        if (block.id == id) {
-          return _GraphElement(type: block.type, options: block.options);
-        }
-      }
-    }
-    return null;
-  }
-
   static Map<String, dynamic> _deepCopyOptions(Map<String, dynamic> source) {
     return source.map((key, value) {
       if (value is Map) {
@@ -283,11 +304,4 @@ class GraphEditorLogic {
       return MapEntry(key, value);
     });
   }
-}
-
-class _GraphElement {
-  const _GraphElement({required this.type, required this.options});
-
-  final String type;
-  final Map<String, dynamic> options;
 }

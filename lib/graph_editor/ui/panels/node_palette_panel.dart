@@ -1,5 +1,4 @@
 import 'package:data_gen_ai/core/theme/app_spacing.dart';
-import 'package:data_gen_ai/graph_editor/models/graph_position.dart';
 import 'package:data_gen_ai/graph_editor/registry/node_registry.dart';
 import 'package:data_gen_ai/graph_editor/state/graph_editor_cubit.dart';
 import 'package:data_gen_ai/graph_editor/state/graph_editor_state.dart';
@@ -12,9 +11,19 @@ class NodePalettePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final nodes = NodeRegistry.paletteNodes();
-    final grouped = <String, List<NodeTypeDefinition>>{};
+    final blocks = NodeRegistry.all.where((d) => d.isBlockNode).toList();
+
+    final groupedNodes = <String, List<NodeTypeDefinition>>{};
     for (final node in nodes) {
-      grouped.putIfAbsent(node.category, () => <NodeTypeDefinition>[]).add(node);
+      groupedNodes.putIfAbsent(node.category, () => <NodeTypeDefinition>[]).add(node);
+    }
+
+    final groupedBlocks = <String, List<NodeTypeDefinition>>{};
+    for (final block in blocks) {
+      final parentName =
+          NodeRegistry.byTypeId(block.parentContextTypeId!)?.displayName ??
+          'Context';
+      groupedBlocks.putIfAbsent(parentName, () => <NodeTypeDefinition>[]).add(block);
     }
 
     return Column(
@@ -32,25 +41,39 @@ class NodePalettePanel extends StatelessWidget {
         Expanded(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            children: grouped.entries.map((entry) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8, top: 8),
-                    child: Text(
-                      entry.key,
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
+            children: <Widget>[
+              ...groupedNodes.entries.map(
+                (entry) => _CategorySection(
+                  title: entry.key,
+                  definitions: entry.value,
+                ),
+              ),
+              if (blocks.isNotEmpty) ...<Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(top: 16, bottom: 8),
+                  child: Text(
+                    'Blocks',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  ...entry.value.map(
-                    (definition) => _PaletteTile(definition: definition),
+                ),
+                Text(
+                  'Place block nodes on the canvas, then connect their top Block port to a context node\'s bottom Blocks port.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
-                ],
-              );
-            }).toList(),
+                ),
+                const SizedBox(height: 8),
+                ...groupedBlocks.entries.map(
+                  (entry) => _CategorySection(
+                    title: entry.key,
+                    definitions: entry.value,
+                    isBlock: true,
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ],
@@ -58,10 +81,44 @@ class NodePalettePanel extends StatelessWidget {
   }
 }
 
+class _CategorySection extends StatelessWidget {
+  const _CategorySection({
+    required this.title,
+    required this.definitions,
+    this.isBlock = false,
+  });
+
+  final String title;
+  final List<NodeTypeDefinition> definitions;
+  final bool isBlock;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8, top: 8),
+          child: Text(
+            title,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+        ),
+        ...definitions.map(
+          (definition) => _PaletteTile(definition: definition, isBlock: isBlock),
+        ),
+      ],
+    );
+  }
+}
+
 class _PaletteTile extends StatelessWidget {
-  const _PaletteTile({required this.definition});
+  const _PaletteTile({required this.definition, this.isBlock = false});
 
   final NodeTypeDefinition definition;
+  final bool isBlock;
 
   @override
   Widget build(BuildContext context) {
@@ -71,13 +128,16 @@ class _PaletteTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         onTap: () {
           final state = context.read<GraphEditorCubit>().state;
-          final offset = state.viewportOffset;
-          final x = 120 + (state.document.nodes.length * 24);
-          final y = 120 + (state.document.nodes.length * 24);
+          final count = state.document.nodes.length;
+          final x = 120.0 + (count * 28);
+          final y = 120.0 + (count * 28) + (isBlock ? 80 : 0);
           context.read<GraphEditorCubit>().addNode(
             definition.typeId,
-            GraphPosition(x: x - offset.dx, y: y - offset.dy),
+            Offset(x, y),
           );
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
         },
         child: Padding(
           padding: const EdgeInsets.all(12),

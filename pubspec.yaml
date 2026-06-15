@@ -27,6 +27,7 @@ dependencies:
   flutter_animate: ^4.5.2
   firebase_core: ^4.10.0
   firebase_database: ^12.4.2
+  vyuh_node_flow: ^0.27.3
 
 dev_dependencies:
   flutter_test:

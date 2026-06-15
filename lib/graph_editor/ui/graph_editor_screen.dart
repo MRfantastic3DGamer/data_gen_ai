@@ -1,10 +1,9 @@
 import 'package:data_gen_ai/graph_editor/services/graph_file_service.dart';
 import 'package:data_gen_ai/graph_editor/state/graph_editor_cubit.dart';
 import 'package:data_gen_ai/graph_editor/state/graph_editor_state.dart';
-import 'package:data_gen_ai/graph_editor/ui/canvas/graph_canvas.dart';
-import 'package:data_gen_ai/graph_editor/ui/canvas/graph_layout.dart';
 import 'package:data_gen_ai/graph_editor/ui/panels/node_options_panel.dart';
 import 'package:data_gen_ai/graph_editor/ui/panels/node_palette_panel.dart';
+import 'package:data_gen_ai/graph_editor/ui/vyuh_graph_canvas.dart';
 import 'package:data_gen_ai/graph_editor/ui/widgets/graph_mobile_chrome.dart';
 import 'package:data_gen_ai/widgets/common/app_snackbar.dart';
 import 'package:flutter/material.dart';
@@ -75,7 +74,7 @@ class _GraphEditorScreenState extends State<GraphEditorScreen> {
 
   void _showOptionsSheet(BuildContext context) {
     final state = _cubit.state;
-    if (state.selectedNodeId == null && state.selectedBlockId == null) {
+    if (state.selectedNodeId == null) {
       AppSnackBar.showError(context, 'Tap a node on the canvas first.');
       return;
     }
@@ -114,7 +113,7 @@ class _GraphEditorScreenState extends State<GraphEditorScreen> {
           }
         },
         builder: (context, state) {
-          final isMobile = GraphLayoutMetrics.isMobile(context);
+          final isMobile = MediaQuery.sizeOf(context).width < 720;
 
           return Scaffold(
             appBar: AppBar(
@@ -135,9 +134,7 @@ class _GraphEditorScreenState extends State<GraphEditorScreen> {
                   ),
                 IconButton(
                   tooltip: 'Delete selected',
-                  onPressed:
-                      (state.selectedNodeId != null ||
-                          state.selectedBlockId != null)
+                  onPressed: state.selectedNodeId != null
                       ? () => context.read<GraphEditorCubit>().removeSelected()
                       : null,
                   icon: const Icon(Icons.delete_outline),
@@ -166,25 +163,18 @@ class _GraphEditorScreenState extends State<GraphEditorScreen> {
   }
 
   Widget _buildDesktopBody(BuildContext context) {
-    return Column(
+    return Row(
       children: <Widget>[
-        const GraphConnectionBanner(),
-        Expanded(
-          child: Row(
-            children: <Widget>[
-              const SizedBox(
-                width: 260,
-                child: NodePalettePanel(),
-              ),
-              const VerticalDivider(width: 1),
-              const Expanded(child: GraphCanvas(showHelpBanner: false)),
-              const VerticalDivider(width: 1),
-              const SizedBox(
-                width: 320,
-                child: NodeOptionsPanel(),
-              ),
-            ],
-          ),
+        const SizedBox(
+          width: 260,
+          child: NodePalettePanel(),
+        ),
+        const VerticalDivider(width: 1),
+        const Expanded(child: VyuhGraphCanvas()),
+        const VerticalDivider(width: 1),
+        const SizedBox(
+          width: 320,
+          child: NodeOptionsPanel(),
         ),
       ],
     );
@@ -193,9 +183,8 @@ class _GraphEditorScreenState extends State<GraphEditorScreen> {
   Widget _buildMobileBody(BuildContext context) {
     return Column(
       children: <Widget>[
-        const GraphConnectionBanner(),
         const Expanded(
-          child: GraphCanvas(),
+          child: VyuhGraphCanvas(),
         ),
         GraphMobileToolbar(
           onAddNode: () => _showPaletteSheet(context),

@@ -1,6 +1,7 @@
 import 'package:data_gen_ai/graph_editor/models/graph_context.dart';
 import 'package:data_gen_ai/graph_editor/models/graph_edge.dart';
 import 'package:data_gen_ai/graph_editor/models/graph_node.dart';
+import 'package:data_gen_ai/graph_editor/vyuh/vyuh_graph_adapter.dart';
 
 class GraphDocument {
   const GraphDocument({
@@ -20,7 +21,7 @@ class GraphDocument {
   }
 
   factory GraphDocument.fromJson(Map<String, dynamic> json) {
-    return GraphDocument(
+    final document = GraphDocument(
       graphName: json['graphName'] as String? ?? 'Untitled',
       nodes: (json['nodes'] as List? ?? const <dynamic>[])
           .map((e) => GraphNode.fromJson(Map<String, dynamic>.from(e as Map)))
@@ -32,6 +33,7 @@ class GraphDocument {
           .map((e) => GraphContext.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList(),
     );
+    return VyuhGraphAdapter.migrateLegacyContexts(document);
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{

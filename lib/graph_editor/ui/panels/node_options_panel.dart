@@ -17,26 +17,13 @@ class NodeOptionsPanel extends StatelessWidget {
     return BlocBuilder<GraphEditorCubit, GraphEditorState>(
       builder: (context, state) {
         final selectedNode = state.selectedNode;
-        final selectedBlock = state.selectedBlock;
-        if (selectedNode == null && selectedBlock == null) {
+        if (selectedNode == null) {
           return const _EmptyPanel(
-            message: 'Select a node or block to edit its options.',
+            message: 'Select a node to edit its options.',
           );
         }
 
-        if (selectedBlock != null) {
-          final definition = NodeRegistry.byTypeId(selectedBlock.type);
-          return _OptionsScaffold(
-            title: definition?.displayName ?? 'Block',
-            subtitle: 'Block options',
-            child: _BlockOptionsEditor(
-              parentNodeId: state.selectedBlockParentId!,
-              block: selectedBlock,
-            ),
-          );
-        }
-
-        final definition = NodeRegistry.byTypeId(selectedNode!.type);
+        final definition = NodeRegistry.byTypeId(selectedNode.type);
         return _OptionsScaffold(
           title: definition?.displayName ?? 'Node',
           subtitle: definition?.description,
@@ -135,23 +122,6 @@ class _NodeOptionsEditor extends StatelessWidget {
         _ProfileOptions(node: node),
       _ => const _EmptyPanel(message: 'No options for this node type yet.'),
     };
-  }
-}
-
-class _BlockOptionsEditor extends StatelessWidget {
-  const _BlockOptionsEditor({
-    required this.parentNodeId,
-    required this.block,
-  });
-
-  final String parentNodeId;
-  final dynamic block;
-
-  @override
-  Widget build(BuildContext context) {
-    return const _EmptyPanel(
-      message: 'Block ports are wired on the canvas. No extra options yet.',
-    );
   }
 }
 
