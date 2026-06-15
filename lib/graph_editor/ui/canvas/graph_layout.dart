@@ -48,7 +48,7 @@ class GraphLayoutCalculator {
   static double nodeHeight(
     String typeId,
     Map<String, dynamic> options, {
-    double portRowHeight = portRowHeightDesktop,
+    double portRowHeight = GraphLayoutMetrics.portRowHeightDesktop,
   }) {
     final definition = NodeRegistry.byTypeId(typeId);
     if (definition == null) return GraphLayoutMetrics.nodeHeaderHeight;
