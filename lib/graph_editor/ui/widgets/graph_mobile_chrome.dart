@@ -131,7 +131,9 @@ class GraphMobileHelpBanner extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Text(
-                'Tap a node to select and edit. Tap a port twice (or drag to another port) to connect edges. Drag the node header to move. Pinch to zoom, drag empty space to pan.',
+                'Tap a node header or body to select it, then tap Edit below. '
+                'To connect ports: tap a port, then tap a compatible port on another node or block. '
+                'Drag the header to move a node. Drag empty space to pan, pinch to zoom.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                   height: 1.4,

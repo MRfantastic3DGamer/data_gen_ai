@@ -4,6 +4,7 @@ import 'package:data_gen_ai/graph_editor/models/graph_node.dart';
 import 'package:data_gen_ai/graph_editor/models/port_definition.dart';
 import 'package:data_gen_ai/graph_editor/registry/node_registry.dart';
 import 'package:data_gen_ai/graph_editor/state/graph_editor_cubit.dart';
+import 'package:data_gen_ai/graph_editor/ui/canvas/graph_interaction_scope.dart';
 import 'package:data_gen_ai/graph_editor/ui/canvas/graph_layout.dart';
 import 'package:data_gen_ai/graph_editor/ui/canvas/graph_port_widget.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +22,6 @@ class GraphNodeWidget extends StatefulWidget {
     required this.onSelect,
     required this.onSelectBlock,
     required this.onAddBlock,
-    required this.worldToLocal,
   });
 
   final GraphNode node;
@@ -33,14 +33,13 @@ class GraphNodeWidget extends StatefulWidget {
   final VoidCallback onSelect;
   final void Function(String blockId) onSelectBlock;
   final void Function(String blockTypeId) onAddBlock;
-  final Offset Function(Offset global) worldToLocal;
 
   @override
   State<GraphNodeWidget> createState() => _GraphNodeWidgetState();
 }
 
 class _GraphNodeWidgetState extends State<GraphNodeWidget> {
-  Offset? _dragOrigin;
+  Offset? _dragOriginWorld;
   Offset? _nodeOrigin;
 
   @override
@@ -70,14 +69,20 @@ class _GraphNodeWidgetState extends State<GraphNodeWidget> {
             width: GraphLayoutMetrics.nodeWidth,
             height: nodeHeight,
             onSelect: widget.onSelect,
-            onPanStart: (details) {
-              widget.onSelect();
-              _dragOrigin = details.globalPosition;
-              _nodeOrigin = widget.node.position.toOffset();
-            },
-            onPanUpdate: (details) {
-              if (_dragOrigin == null || _nodeOrigin == null) return;
-              final delta = details.globalPosition - _dragOrigin!;
+            onHeaderPointerDown: (pointer) =>
+                GraphInteractionScope.of(context).acquirePointer(pointer),
+            onHeaderPointerUp: (pointer) =>
+                GraphInteractionScope.of(context).releasePointer(pointer),
+            onHeaderDragUpdate: (globalPosition) {
+              final scope = GraphInteractionScope.of(context);
+              final world = scope.globalToWorld(globalPosition);
+              if (_dragOriginWorld == null || _nodeOrigin == null) {
+                _dragOriginWorld = world;
+                _nodeOrigin = widget.node.position.toOffset();
+                widget.onSelect();
+                return;
+              }
+              final delta = world - _dragOriginWorld!;
               context.read<GraphEditorCubit>().moveNode(
                 widget.node.id,
                 widget.node.position.copyWith(
@@ -86,8 +91,8 @@ class _GraphNodeWidgetState extends State<GraphNodeWidget> {
                 ),
               );
             },
-            onPanEnd: (_) {
-              _dragOrigin = null;
+            onHeaderDragEnd: () {
+              _dragOriginWorld = null;
               _nodeOrigin = null;
             },
             child: Column(
@@ -102,15 +107,11 @@ class _GraphNodeWidgetState extends State<GraphNodeWidget> {
                           widget.pendingNodeId == widget.node.id &&
                           widget.pendingPortName == port.name,
                       onTap: () => _handlePortTap(context, port),
-                      onPanStart: () => _startConnection(context, port),
-                      onPanUpdate: (details) => _updateConnection(
-                        context,
-                        widget.worldToLocal(details.globalPosition),
-                      ),
-                      onPanEnd: (details) => _finishConnectionDrag(
-                        context,
-                        widget.worldToLocal(details.globalPosition),
-                      ),
+                      onDragStart: () => _startConnection(context, port),
+                      onDragUpdate: (world) =>
+                          _updateConnection(context, world),
+                      onDragEnd: (world) =>
+                          _finishConnectionDrag(context, world),
                     ),
                   )
                   .toList(),
@@ -133,7 +134,6 @@ class _GraphNodeWidgetState extends State<GraphNodeWidget> {
                   pendingNodeId: widget.pendingNodeId,
                   pendingPortName: widget.pendingPortName,
                   onSelect: () => widget.onSelectBlock(entry.value.id),
-                  worldToLocal: widget.worldToLocal,
                 ),
               ),
             ),
@@ -156,21 +156,13 @@ class _GraphNodeWidgetState extends State<GraphNodeWidget> {
     final cubit = context.read<GraphEditorCubit>();
     final pending = cubit.state.pendingConnection;
     final isOutput = port.direction == PortDirection.output;
-    final layout = GraphLayoutCalculator.portLayouts(
-      document: cubit.state.document,
-      nodeId: widget.node.id,
-      typeId: widget.node.type,
-      options: widget.node.options,
-      nodeTopLeft: widget.node.position.toOffset(),
-      portRowHeight: GraphLayoutMetrics.portRowHeight(context),
-    ).firstWhere((l) => l.port.name == port.name);
 
     if (pending == null) {
       cubit.startConnection(
         nodeId: widget.node.id,
         portName: port.name,
         isOutput: isOutput,
-        position: layout.center,
+        position: _portCenter(context, port.name),
       );
       return;
     }
@@ -184,6 +176,27 @@ class _GraphNodeWidgetState extends State<GraphNodeWidget> {
 
   void _startConnection(BuildContext context, PortDefinition port) {
     final isOutput = port.direction == PortDirection.output;
+    context.read<GraphEditorCubit>().startConnection(
+      nodeId: widget.node.id,
+      portName: port.name,
+      isOutput: isOutput,
+      position: _portCenter(context, port.name),
+    );
+  }
+
+  void _updateConnection(BuildContext context, Offset world) {
+    context.read<GraphEditorCubit>().updatePendingConnection(world);
+  }
+
+  void _finishConnectionDrag(BuildContext context, Offset world) {
+    context.read<GraphEditorCubit>().tryCompleteConnectionAt(
+      world,
+      hitRadius: GraphLayoutMetrics.portHitRadius(context),
+      portRowHeight: GraphLayoutMetrics.portRowHeight(context),
+    );
+  }
+
+  Offset _portCenter(BuildContext context, String portName) {
     final layout = GraphLayoutCalculator.portLayouts(
       document: context.read<GraphEditorCubit>().state.document,
       nodeId: widget.node.id,
@@ -191,25 +204,8 @@ class _GraphNodeWidgetState extends State<GraphNodeWidget> {
       options: widget.node.options,
       nodeTopLeft: widget.node.position.toOffset(),
       portRowHeight: GraphLayoutMetrics.portRowHeight(context),
-    ).firstWhere((l) => l.port.name == port.name);
-    context.read<GraphEditorCubit>().startConnection(
-      nodeId: widget.node.id,
-      portName: port.name,
-      isOutput: isOutput,
-      position: layout.center,
     );
-  }
-
-  void _updateConnection(BuildContext context, Offset position) {
-    context.read<GraphEditorCubit>().updatePendingConnection(position);
-  }
-
-  void _finishConnectionDrag(BuildContext context, Offset position) {
-    context.read<GraphEditorCubit>().tryCompleteConnectionAt(
-      position,
-      hitRadius: GraphLayoutMetrics.portHitRadius(context),
-      portRowHeight: GraphLayoutMetrics.portRowHeight(context),
-    );
+    return layout.firstWhere((l) => l.port.name == portName).center;
   }
 }
 
@@ -223,7 +219,6 @@ class _BlockCard extends StatelessWidget {
     required this.pendingNodeId,
     required this.pendingPortName,
     required this.onSelect,
-    required this.worldToLocal,
   });
 
   final GraphBlock block;
@@ -234,35 +229,35 @@ class _BlockCard extends StatelessWidget {
   final String? pendingNodeId;
   final String? pendingPortName;
   final VoidCallback onSelect;
-  final Offset Function(Offset global) worldToLocal;
 
-  Offset _blockTopLeft(BuildContext context) {
+  Offset _blockTopLeft() {
     final parentHeight = GraphLayoutCalculator.nodeHeight(
       parentNode.type,
       parentNode.options,
       portRowHeight: portRowHeight,
     );
+    final blockHeight = _blockHeight();
     return parentNode.position.toOffset().translate(
       GraphLayoutMetrics.contextPadding,
       parentHeight +
           GraphLayoutMetrics.contextPadding +
-          blockIndex * (_blockHeight(context) + GraphLayoutMetrics.blockGap),
+          blockIndex * (blockHeight + GraphLayoutMetrics.blockGap),
     );
   }
 
-  double _blockHeight(BuildContext context) {
+  double _blockHeight() {
     final definition = NodeRegistry.byTypeId(block.type);
     final portCount = definition?.resolvePorts(block.options).length ?? 0;
     return GraphLayoutMetrics.nodeHeaderHeight + portCount * portRowHeight + 8;
   }
 
-  Offset _portCenter(BuildContext context, String portName) {
+  Offset _portCenter(String portName) {
     final layout = GraphLayoutCalculator.portLayouts(
       document: GraphDocument.empty(),
       nodeId: block.id,
       typeId: block.type,
       options: block.options,
-      nodeTopLeft: _blockTopLeft(context),
+      nodeTopLeft: _blockTopLeft(),
       isBlock: true,
       portRowHeight: portRowHeight,
     );
@@ -275,9 +270,7 @@ class _BlockCard extends StatelessWidget {
     if (definition == null) return const SizedBox.shrink();
 
     final ports = definition.resolvePorts(block.options);
-    final blockHeight = GraphLayoutMetrics.nodeHeaderHeight +
-        ports.length * portRowHeight +
-        8;
+    final blockHeight = _blockHeight();
 
     return _NodeCard(
       title: definition.displayName,
@@ -297,16 +290,14 @@ class _BlockCard extends StatelessWidget {
                 isPendingSource:
                     pendingNodeId == block.id && pendingPortName == port.name,
                 onTap: () => _handlePortTap(context, port),
-                onPanStart: () => _startConnection(context, port),
-                onPanUpdate: (details) => context
+                onDragStart: () => _startConnection(context, port),
+                onDragUpdate: (world) => context
                     .read<GraphEditorCubit>()
-                    .updatePendingConnection(
-                      worldToLocal(details.globalPosition),
-                    ),
-                onPanEnd: (details) => context
+                    .updatePendingConnection(world),
+                onDragEnd: (world) => context
                     .read<GraphEditorCubit>()
                     .tryCompleteConnectionAt(
-                      worldToLocal(details.globalPosition),
+                      world,
                       hitRadius: GraphLayoutMetrics.portHitRadius(context),
                       portRowHeight: portRowHeight,
                     ),
@@ -327,7 +318,7 @@ class _BlockCard extends StatelessWidget {
         nodeId: block.id,
         portName: port.name,
         isOutput: isOutput,
-        position: _portCenter(context, port.name),
+        position: _portCenter(port.name),
       );
       return;
     }
@@ -345,12 +336,12 @@ class _BlockCard extends StatelessWidget {
       nodeId: block.id,
       portName: port.name,
       isOutput: isOutput,
-      position: _portCenter(context, port.name),
+      position: _portCenter(port.name),
     );
   }
 }
 
-class _NodeCard extends StatelessWidget {
+class _NodeCard extends StatefulWidget {
   const _NodeCard({
     required this.title,
     required this.subtitle,
@@ -360,9 +351,10 @@ class _NodeCard extends StatelessWidget {
     required this.height,
     required this.child,
     required this.onSelect,
-    this.onPanStart,
-    this.onPanUpdate,
-    this.onPanEnd,
+    this.onHeaderPointerDown,
+    this.onHeaderPointerUp,
+    this.onHeaderDragUpdate,
+    this.onHeaderDragEnd,
   });
 
   final String title;
@@ -373,27 +365,41 @@ class _NodeCard extends StatelessWidget {
   final double height;
   final Widget child;
   final VoidCallback onSelect;
-  final GestureDragStartCallback? onPanStart;
-  final GestureDragUpdateCallback? onPanUpdate;
-  final GestureDragEndCallback? onPanEnd;
+  final void Function(int pointer)? onHeaderPointerDown;
+  final void Function(int pointer)? onHeaderPointerUp;
+  final void Function(Offset globalPosition)? onHeaderDragUpdate;
+  final VoidCallback? onHeaderDragEnd;
+
+  @override
+  State<_NodeCard> createState() => _NodeCardState();
+}
+
+class _NodeCardState extends State<_NodeCard> {
+  Offset? _bodyDownGlobal;
+  Offset? _headerDownGlobal;
+  var _headerDragging = false;
+
+  static const double _tapSlop = 14;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 150),
-      width: width,
+      width: widget.width,
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isSelected ? accentColor : colorScheme.outlineVariant,
-          width: isSelected ? 2.5 : 1,
+          color: widget.isSelected ? widget.accentColor : colorScheme.outlineVariant,
+          width: widget.isSelected ? 2.5 : 1,
         ),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withValues(alpha: isSelected ? 0.12 : 0.08),
-            blurRadius: isSelected ? 12 : 8,
+            color: Colors.black.withValues(
+              alpha: widget.isSelected ? 0.12 : 0.08,
+            ),
+            blurRadius: widget.isSelected ? 12 : 8,
             offset: const Offset(0, 2),
           ),
         ],
@@ -401,16 +407,45 @@ class _NodeCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          GestureDetector(
-            onTap: onSelect,
-            onPanStart: onPanStart,
-            onPanUpdate: onPanUpdate,
-            onPanEnd: onPanEnd,
+          Listener(
+            behavior: HitTestBehavior.opaque,
+            onPointerDown: (event) {
+              widget.onHeaderPointerDown?.call(event.pointer);
+              _headerDownGlobal = event.position;
+              _headerDragging = false;
+            },
+            onPointerMove: (event) {
+              if (_headerDownGlobal == null) return;
+              if (!_headerDragging &&
+                  (event.position - _headerDownGlobal!).distance > _tapSlop) {
+                _headerDragging = true;
+              }
+              if (_headerDragging) {
+                widget.onHeaderDragUpdate?.call(event.position);
+              }
+            },
+            onPointerUp: (event) {
+              widget.onHeaderPointerUp?.call(event.pointer);
+              if (!_headerDragging) {
+                widget.onSelect();
+              }
+              widget.onHeaderDragEnd?.call();
+              _headerDownGlobal = null;
+              _headerDragging = false;
+            },
+            onPointerCancel: (event) {
+              widget.onHeaderPointerUp?.call(event.pointer);
+              widget.onHeaderDragEnd?.call();
+              _headerDownGlobal = null;
+              _headerDragging = false;
+            },
             child: Container(
               height: GraphLayoutMetrics.nodeHeaderHeight,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: isSelected ? 0.28 : 0.18),
+                color: widget.accentColor.withValues(
+                  alpha: widget.isSelected ? 0.28 : 0.18,
+                ),
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(11),
                 ),
@@ -427,7 +462,7 @@ class _NodeCard extends StatelessWidget {
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: accentColor,
+                      color: widget.accentColor,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -438,13 +473,13 @@ class _NodeCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
                         Text(
-                          title,
+                          widget.title,
                           style: Theme.of(context).textTheme.titleSmall
                               ?.copyWith(fontWeight: FontWeight.w700),
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          subtitle,
+                          widget.subtitle,
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(color: colorScheme.onSurfaceVariant),
                         ),
@@ -455,11 +490,27 @@ class _NodeCard extends StatelessWidget {
               ),
             ),
           ),
-          GestureDetector(
-            onTap: onSelect,
+          Listener(
+            behavior: HitTestBehavior.opaque,
+            onPointerDown: (event) {
+              GraphInteractionScope.of(context).acquirePointer(event.pointer);
+              _bodyDownGlobal = event.position;
+            },
+            onPointerUp: (event) {
+              GraphInteractionScope.of(context).releasePointer(event.pointer);
+              if (_bodyDownGlobal != null &&
+                  (event.position - _bodyDownGlobal!).distance < _tapSlop) {
+                widget.onSelect();
+              }
+              _bodyDownGlobal = null;
+            },
+            onPointerCancel: (event) {
+              GraphInteractionScope.of(context).releasePointer(event.pointer);
+              _bodyDownGlobal = null;
+            },
             child: SizedBox(
-              height: height - GraphLayoutMetrics.nodeHeaderHeight,
-              child: child,
+              height: widget.height - GraphLayoutMetrics.nodeHeaderHeight,
+              child: widget.child,
             ),
           ),
         ],
