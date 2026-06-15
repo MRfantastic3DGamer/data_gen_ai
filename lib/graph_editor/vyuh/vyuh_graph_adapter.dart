@@ -8,6 +8,7 @@ import 'package:data_gen_ai/graph_editor/models/graph_node_data.dart';
 import 'package:data_gen_ai/graph_editor/models/graph_position.dart';
 import 'package:data_gen_ai/graph_editor/models/structural_ports.dart';
 import 'package:data_gen_ai/graph_editor/registry/node_registry.dart';
+import 'package:data_gen_ai/graph_editor/vyuh/graph_node_layout.dart';
 import 'package:data_gen_ai/graph_editor/vyuh/vyuh_port_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
@@ -15,19 +16,6 @@ import 'package:vyuh_node_flow/vyuh_node_flow.dart' hide GraphPosition;
 
 abstract final class VyuhGraphAdapter {
   static const _uuid = Uuid();
-  static const _nodeWidth = 220.0;
-  static const _portRowHeight = 28.0;
-  static const _headerHeight = 44.0;
-
-  static double estimateNodeHeight(String unityTypeId, Map<String, dynamic> options) {
-    final definition = NodeRegistry.byTypeId(unityTypeId);
-    if (definition == null) return _headerHeight + 40;
-
-    var rows = definition.resolvePorts(options).length;
-    if (definition.isContextNode) rows += 1;
-    if (definition.isBlockNode) rows += 1;
-    return _headerHeight + (rows * _portRowHeight) + 16;
-  }
 
   static NodeFlowController<GraphNodeData, dynamic> controllerFromDocument(
     GraphDocument document,
@@ -127,15 +115,13 @@ abstract final class VyuhGraphAdapter {
 
   static Node<GraphNodeData> vyuhNodeFromGraphNode(GraphNode node) {
     final data = GraphNodeData.fromGraphNode(node);
+    final size = GraphNodeLayout.nodeSize(node.type, node.options);
     return Node<GraphNodeData>(
       id: node.id,
       type: node.type,
       position: Offset(node.position.x, node.position.y),
       data: data,
-      size: Size(
-        _nodeWidth,
-        estimateNodeHeight(node.type, node.options),
-      ),
+      size: size,
       ports: VyuhPortBuilder.buildPorts(node.type, node.options),
     );
   }
@@ -184,6 +170,11 @@ abstract final class VyuhGraphAdapter {
       node.data.unityTypeId,
       node.data.options,
     );
+    final size = GraphNodeLayout.nodeSize(
+      node.data.unityTypeId,
+      node.data.options,
+    );
+
     final existingIds = node.ports.map((p) => p.id).toSet();
     for (final port in ports) {
       if (existingIds.contains(port.id)) {
@@ -197,11 +188,6 @@ abstract final class VyuhGraphAdapter {
         node.removePort(existing.id);
       }
     }
-    node.setSize(
-      Size(
-        _nodeWidth,
-        estimateNodeHeight(node.data.unityTypeId, node.data.options),
-      ),
-    );
+    node.setSize(size);
   }
 }

@@ -26,11 +26,22 @@ class _VyuhGraphCanvasState extends State<VyuhGraphCanvas> {
   Widget build(BuildContext context) {
     final cubit = context.read<GraphEditorCubit>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseTheme = isDark ? vyuh.NodeFlowTheme.dark : vyuh.NodeFlowTheme.light;
+    final compact = isCompactGraphEditor(context);
+    final theme = baseTheme.copyWith(
+      portTheme: baseTheme.portTheme.copyWith(
+        size: Size(compact ? 16 : 12, compact ? 16 : 12),
+      ),
+      connectionTheme: baseTheme.connectionTheme.copyWith(
+        strokeWidth: compact ? 2.5 : 2,
+      ),
+    );
 
     return vyuh.NodeFlowEditor<GraphNodeData, dynamic>(
       controller: cubit.controller,
-      theme: isDark ? vyuh.NodeFlowTheme.dark : vyuh.NodeFlowTheme.light,
-      events: cubit.buildEvents(),
+      theme: theme,
+      behavior: vyuh.NodeFlowBehavior.design,
+      events: cubit.events,
       nodeBuilder: (context, node) => CharacterDesignNodeWidget(node: node),
     );
   }

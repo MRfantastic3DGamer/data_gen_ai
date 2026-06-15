@@ -91,9 +91,11 @@ class _GraphEditorScreenState extends State<GraphEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final compact = isCompactGraphEditor(context);
+
     return BlocProvider.value(
       value: _cubit,
-      child: BlocConsumer<GraphEditorCubit, GraphEditorState>(
+      child: BlocListener<GraphEditorCubit, GraphEditorState>(
         listenWhen: (previous, current) =>
             previous.connectionError != current.connectionError &&
             current.connectionError != null,
@@ -102,128 +104,24 @@ class _GraphEditorScreenState extends State<GraphEditorScreen> {
             AppSnackBar.showError(context, state.connectionError!);
           }
         },
-        builder: (context, state) {
-          final compact = isCompactGraphEditor(context);
-
-          return Scaffold(
-            appBar: compact
-                ? _buildCompactAppBar(context, state)
-                : _buildWideAppBar(context, state),
-            body: compact ? _buildCompactBody() : _buildWideBody(),
-          );
-        },
-      ),
-    );
-  }
-
-  PreferredSizeWidget _buildCompactAppBar(
-    BuildContext context,
-    GraphEditorState state,
-  ) {
-    return AppBar(
-      title: Text(
-        state.document.graphName,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      actions: <Widget>[
-        if (state.isDirty)
-          Padding(
-            padding: const EdgeInsets.only(right: 4),
-            child: Icon(
-              Icons.circle,
-              size: 10,
-              color: Theme.of(context).colorScheme.tertiary,
-            ),
-          ),
-        PopupMenuButton<_CompactMenuAction>(
-          onSelected: (action) => _handleCompactMenu(action),
-          itemBuilder: (context) => <PopupMenuEntry<_CompactMenuAction>>[
-            PopupMenuItem(
-              value: _CompactMenuAction.save,
-              enabled: !state.isSaving,
-              child: ListTile(
-                leading: const Icon(Icons.save_outlined),
-                title: Text(state.isSaving ? 'Saving…' : 'Save graph'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-            const PopupMenuItem(
-              value: _CompactMenuAction.rename,
-              child: ListTile(
-                leading: Icon(Icons.drive_file_rename_outline),
-                title: Text('Rename graph'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-            const PopupMenuItem(
-              value: _CompactMenuAction.fit,
-              child: ListTile(
-                leading: Icon(Icons.fit_screen_outlined),
-                title: Text('Fit to view'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-            PopupMenuItem(
-              value: _CompactMenuAction.delete,
-              enabled: state.selectedNodeId != null,
-              child: const ListTile(
-                leading: Icon(Icons.delete_outline),
-                title: Text('Delete selected node'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  PreferredSizeWidget _buildWideAppBar(
-    BuildContext context,
-    GraphEditorState state,
-  ) {
-    return AppBar(
-      title: TextField(
-        controller: _nameController,
-        decoration: const InputDecoration(
-          border: InputBorder.none,
-          hintText: 'Graph name',
-        ),
-        style: Theme.of(context).textTheme.titleLarge,
-        onSubmitted: context.read<GraphEditorCubit>().setGraphName,
-      ),
-      actions: <Widget>[
-        if (state.isDirty)
-          const Padding(
-            padding: EdgeInsets.only(right: 8),
-            child: Chip(label: Text('Unsaved')),
-          ),
-        IconButton(
-          tooltip: 'Fit to view',
-          onPressed: _cubit.fitGraphToView,
-          icon: const Icon(Icons.fit_screen_outlined),
-        ),
-        IconButton(
-          tooltip: 'Delete selected',
-          onPressed: state.selectedNodeId != null ? _cubit.removeSelected : null,
-          icon: const Icon(Icons.delete_outline),
-        ),
-        FilledButton.icon(
-          onPressed: state.isSaving ? null : _cubit.save,
-          icon: state.isSaving
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+        child: Scaffold(
+          appBar: compact
+              ? _CompactGraphAppBar(
+                  onMenu: _handleCompactMenu,
+                  onRename: _promptRename,
                 )
-              : const Icon(Icons.save_outlined),
-          label: const Text('Save'),
+              : _WideGraphAppBar(
+                  nameController: _nameController,
+                  onFitView: _cubit.fitGraphToView,
+                  onDeleteSelected: _cubit.removeSelected,
+                  onSave: _cubit.save,
+                ),
+          body: compact ? _buildCompactBody() : _buildWideBody(),
         ),
-        const SizedBox(width: 8),
-      ],
+      ),
     );
   }
+
 
   void _handleCompactMenu(_CompactMenuAction action) {
     switch (action) {
@@ -246,7 +144,7 @@ class _GraphEditorScreenState extends State<GraphEditorScreen> {
           child: NodePalettePanel(),
         ),
         const VerticalDivider(width: 1),
-        const Expanded(child: VyuhGraphCanvas()),
+        const Expanded(child: _StableGraphCanvas()),
         const VerticalDivider(width: 1),
         const SizedBox(
           width: 320,
@@ -259,7 +157,7 @@ class _GraphEditorScreenState extends State<GraphEditorScreen> {
   Widget _buildCompactBody() {
     return Column(
       children: <Widget>[
-        const Expanded(child: VyuhGraphCanvas()),
+        const Expanded(child: _StableGraphCanvas()),
         GraphMobileToolbar(
           onAddNode: _showPaletteSheet,
           onEditSelection: _showOptionsSheet,
@@ -272,3 +170,164 @@ class _GraphEditorScreenState extends State<GraphEditorScreen> {
 }
 
 enum _CompactMenuAction { save, rename, fit, delete }
+
+/// Keeps [VyuhGraphCanvas] mounted across cubit state updates so node drag and
+/// port gestures are not interrupted by selection or document rebuilds.
+class _StableGraphCanvas extends StatelessWidget {
+  const _StableGraphCanvas();
+
+  @override
+  Widget build(BuildContext context) {
+    return const VyuhGraphCanvas();
+  }
+}
+
+class _CompactGraphAppBar extends StatelessWidget implements PreferredSizeWidget {
+  const _CompactGraphAppBar({
+    required this.onMenu,
+    required this.onRename,
+  });
+
+  final void Function(_CompactMenuAction action) onMenu;
+  final Future<void> Function() onRename;
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<GraphEditorCubit, GraphEditorState>(
+      builder: (context, state) {
+        return AppBar(
+          title: Text(
+            state.document.graphName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          actions: <Widget>[
+            if (state.isDirty)
+              Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Icon(
+                  Icons.circle,
+                  size: 10,
+                  color: Theme.of(context).colorScheme.tertiary,
+                ),
+              ),
+            PopupMenuButton<_CompactMenuAction>(
+              onSelected: (action) {
+                if (action == _CompactMenuAction.rename) {
+                  onRename();
+                  return;
+                }
+                onMenu(action);
+              },
+              itemBuilder: (context) => <PopupMenuEntry<_CompactMenuAction>>[
+                PopupMenuItem(
+                  value: _CompactMenuAction.save,
+                  enabled: !state.isSaving,
+                  child: ListTile(
+                    leading: const Icon(Icons.save_outlined),
+                    title: Text(state.isSaving ? 'Saving…' : 'Save graph'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: _CompactMenuAction.rename,
+                  child: ListTile(
+                    leading: Icon(Icons.drive_file_rename_outline),
+                    title: Text('Rename graph'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: _CompactMenuAction.fit,
+                  child: ListTile(
+                    leading: Icon(Icons.fit_screen_outlined),
+                    title: Text('Fit to view'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                PopupMenuItem(
+                  value: _CompactMenuAction.delete,
+                  enabled: state.selectedNodeId != null,
+                  child: const ListTile(
+                    leading: Icon(Icons.delete_outline),
+                    title: Text('Delete selected node'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _WideGraphAppBar extends StatelessWidget implements PreferredSizeWidget {
+  const _WideGraphAppBar({
+    required this.nameController,
+    required this.onFitView,
+    required this.onDeleteSelected,
+    required this.onSave,
+  });
+
+  final TextEditingController nameController;
+  final VoidCallback onFitView;
+  final VoidCallback onDeleteSelected;
+  final Future<void> Function() onSave;
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<GraphEditorCubit, GraphEditorState>(
+      builder: (context, state) {
+        return AppBar(
+          title: TextField(
+            controller: nameController,
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              hintText: 'Graph name',
+            ),
+            style: Theme.of(context).textTheme.titleLarge,
+            onSubmitted: context.read<GraphEditorCubit>().setGraphName,
+          ),
+          actions: <Widget>[
+            if (state.isDirty)
+              const Padding(
+                padding: EdgeInsets.only(right: 8),
+                child: Chip(label: Text('Unsaved')),
+              ),
+            IconButton(
+              tooltip: 'Fit to view',
+              onPressed: onFitView,
+              icon: const Icon(Icons.fit_screen_outlined),
+            ),
+            IconButton(
+              tooltip: 'Delete selected',
+              onPressed:
+                  state.selectedNodeId != null ? onDeleteSelected : null,
+              icon: const Icon(Icons.delete_outline),
+            ),
+            FilledButton.icon(
+              onPressed: state.isSaving ? null : onSave,
+              icon: state.isSaving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save_outlined),
+              label: const Text('Save'),
+            ),
+            const SizedBox(width: 8),
+          ],
+        );
+      },
+    );
+  }
+}

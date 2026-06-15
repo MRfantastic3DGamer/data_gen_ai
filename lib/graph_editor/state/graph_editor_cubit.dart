@@ -20,14 +20,18 @@ class GraphEditorCubit extends Cubit<GraphEditorState> {
           document: document ?? GraphDocument.empty(),
           fileKey: fileKey,
         ),
-      );
+      ) {
+    _events = _createEvents();
+  }
 
   final GraphFileService _fileService;
   late final vyuh.NodeFlowController<GraphNodeData, dynamic> _controller;
+  late final vyuh.NodeFlowEvents<GraphNodeData, dynamic> _events;
 
   vyuh.NodeFlowController<GraphNodeData, dynamic> get controller => _controller;
+  vyuh.NodeFlowEvents<GraphNodeData, dynamic> get events => _events;
 
-  vyuh.NodeFlowEvents<GraphNodeData, dynamic> buildEvents() {
+  vyuh.NodeFlowEvents<GraphNodeData, dynamic> _createEvents() {
     return vyuh.NodeFlowEvents<GraphNodeData, dynamic>(
       onSelectionChange: (selection) {
         final selected =
