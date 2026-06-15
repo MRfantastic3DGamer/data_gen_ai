@@ -1,8 +1,11 @@
 import 'package:data_gen_ai/graph_editor/services/graph_file_service.dart';
 import 'package:data_gen_ai/graph_editor/state/graph_editor_cubit.dart';
 import 'package:data_gen_ai/graph_editor/state/graph_editor_state.dart';
+import 'package:data_gen_ai/graph_editor/ui/graph_editor_layout.dart';
 import 'package:data_gen_ai/graph_editor/ui/panels/node_options_panel.dart';
 import 'package:data_gen_ai/graph_editor/ui/panels/node_palette_panel.dart';
+import 'package:data_gen_ai/graph_editor/ui/sheets/graph_options_sheet.dart';
+import 'package:data_gen_ai/graph_editor/ui/sheets/graph_palette_sheet.dart';
 import 'package:data_gen_ai/graph_editor/ui/vyuh_graph_canvas.dart';
 import 'package:data_gen_ai/graph_editor/ui/widgets/graph_mobile_chrome.dart';
 import 'package:data_gen_ai/widgets/common/app_snackbar.dart';
@@ -44,56 +47,46 @@ class _GraphEditorScreenState extends State<GraphEditorScreen> {
     super.dispose();
   }
 
-  void _showPaletteSheet(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (context) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.55,
-        minChildSize: 0.35,
-        maxChildSize: 0.9,
-        builder: (context, scrollController) => Column(
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Text(
-                'Add node',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            const Expanded(child: NodePalettePanel()),
-          ],
-        ),
-      ),
-    );
+  void _showPaletteSheet() {
+    showGraphPaletteSheet(context, cubit: _cubit);
   }
 
-  void _showOptionsSheet(BuildContext context) {
-    final state = _cubit.state;
-    if (state.selectedNodeId == null) {
+  void _showOptionsSheet() {
+    if (_cubit.state.selectedNodeId == null) {
       AppSnackBar.showError(context, 'Tap a node on the canvas first.');
       return;
     }
+    showGraphOptionsSheet(context, cubit: _cubit);
+  }
 
-    showModalBottomSheet<void>(
+  Future<void> _promptRename() async {
+    final controller = TextEditingController(text: _cubit.state.document.graphName);
+    final name = await showDialog<String>(
       context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (context) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.55,
-        minChildSize: 0.35,
-        maxChildSize: 0.92,
-        builder: (context, scrollController) => const SizedBox(
-          height: 500,
-          child: NodeOptionsPanel(),
+      builder: (context) => AlertDialog(
+        title: const Text('Rename graph'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Graph name'),
+          onSubmitted: (value) => Navigator.pop(context, value),
         ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('Save'),
+          ),
+        ],
       ),
     );
+    if (name != null && name.trim().isNotEmpty) {
+      _cubit.setGraphName(name.trim());
+      _nameController.text = name.trim();
+    }
   }
 
   @override
@@ -108,61 +101,144 @@ class _GraphEditorScreenState extends State<GraphEditorScreen> {
           if (state.connectionError != null) {
             AppSnackBar.showError(context, state.connectionError!);
           }
-          if (_nameController.text != state.document.graphName) {
-            _nameController.text = state.document.graphName;
-          }
         },
         builder: (context, state) {
-          final isMobile = MediaQuery.sizeOf(context).width < 720;
+          final compact = isCompactGraphEditor(context);
 
           return Scaffold(
-            appBar: AppBar(
-              title: TextField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  hintText: 'Graph name',
-                ),
-                style: Theme.of(context).textTheme.titleLarge,
-                onSubmitted: context.read<GraphEditorCubit>().setGraphName,
-              ),
-              actions: <Widget>[
-                if (state.isDirty)
-                  const Padding(
-                    padding: EdgeInsets.only(right: 8),
-                    child: Chip(label: Text('Unsaved')),
-                  ),
-                IconButton(
-                  tooltip: 'Delete selected',
-                  onPressed: state.selectedNodeId != null
-                      ? () => context.read<GraphEditorCubit>().removeSelected()
-                      : null,
-                  icon: const Icon(Icons.delete_outline),
-                ),
-                FilledButton.icon(
-                  onPressed: state.isSaving
-                      ? null
-                      : () => context.read<GraphEditorCubit>().save(),
-                  icon: state.isSaving
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.save_outlined),
-                  label: Text(isMobile ? '' : 'Save'),
-                ),
-                const SizedBox(width: 8),
-              ],
-            ),
-            body: isMobile ? _buildMobileBody(context) : _buildDesktopBody(context),
+            appBar: compact
+                ? _buildCompactAppBar(context, state)
+                : _buildWideAppBar(context, state),
+            body: compact ? _buildCompactBody() : _buildWideBody(),
           );
         },
       ),
     );
   }
 
-  Widget _buildDesktopBody(BuildContext context) {
+  PreferredSizeWidget _buildCompactAppBar(
+    BuildContext context,
+    GraphEditorState state,
+  ) {
+    return AppBar(
+      title: Text(
+        state.document.graphName,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      actions: <Widget>[
+        if (state.isDirty)
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: Icon(
+              Icons.circle,
+              size: 10,
+              color: Theme.of(context).colorScheme.tertiary,
+            ),
+          ),
+        PopupMenuButton<_CompactMenuAction>(
+          onSelected: (action) => _handleCompactMenu(action),
+          itemBuilder: (context) => <PopupMenuEntry<_CompactMenuAction>>[
+            PopupMenuItem(
+              value: _CompactMenuAction.save,
+              enabled: !state.isSaving,
+              child: ListTile(
+                leading: const Icon(Icons.save_outlined),
+                title: Text(state.isSaving ? 'Saving…' : 'Save graph'),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+            const PopupMenuItem(
+              value: _CompactMenuAction.rename,
+              child: ListTile(
+                leading: Icon(Icons.drive_file_rename_outline),
+                title: Text('Rename graph'),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+            const PopupMenuItem(
+              value: _CompactMenuAction.fit,
+              child: ListTile(
+                leading: Icon(Icons.fit_screen_outlined),
+                title: Text('Fit to view'),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+            PopupMenuItem(
+              value: _CompactMenuAction.delete,
+              enabled: state.selectedNodeId != null,
+              child: const ListTile(
+                leading: Icon(Icons.delete_outline),
+                title: Text('Delete selected node'),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  PreferredSizeWidget _buildWideAppBar(
+    BuildContext context,
+    GraphEditorState state,
+  ) {
+    return AppBar(
+      title: TextField(
+        controller: _nameController,
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          hintText: 'Graph name',
+        ),
+        style: Theme.of(context).textTheme.titleLarge,
+        onSubmitted: context.read<GraphEditorCubit>().setGraphName,
+      ),
+      actions: <Widget>[
+        if (state.isDirty)
+          const Padding(
+            padding: EdgeInsets.only(right: 8),
+            child: Chip(label: Text('Unsaved')),
+          ),
+        IconButton(
+          tooltip: 'Fit to view',
+          onPressed: _cubit.fitGraphToView,
+          icon: const Icon(Icons.fit_screen_outlined),
+        ),
+        IconButton(
+          tooltip: 'Delete selected',
+          onPressed: state.selectedNodeId != null ? _cubit.removeSelected : null,
+          icon: const Icon(Icons.delete_outline),
+        ),
+        FilledButton.icon(
+          onPressed: state.isSaving ? null : _cubit.save,
+          icon: state.isSaving
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.save_outlined),
+          label: const Text('Save'),
+        ),
+        const SizedBox(width: 8),
+      ],
+    );
+  }
+
+  void _handleCompactMenu(_CompactMenuAction action) {
+    switch (action) {
+      case _CompactMenuAction.save:
+        _cubit.save();
+      case _CompactMenuAction.rename:
+        _promptRename();
+      case _CompactMenuAction.fit:
+        _cubit.fitGraphToView();
+      case _CompactMenuAction.delete:
+        _cubit.removeSelected();
+    }
+  }
+
+  Widget _buildWideBody() {
     return Row(
       children: <Widget>[
         const SizedBox(
@@ -180,17 +256,19 @@ class _GraphEditorScreenState extends State<GraphEditorScreen> {
     );
   }
 
-  Widget _buildMobileBody(BuildContext context) {
+  Widget _buildCompactBody() {
     return Column(
       children: <Widget>[
-        const Expanded(
-          child: VyuhGraphCanvas(),
-        ),
+        const Expanded(child: VyuhGraphCanvas()),
         GraphMobileToolbar(
-          onAddNode: () => _showPaletteSheet(context),
-          onEditSelection: () => _showOptionsSheet(context),
+          onAddNode: _showPaletteSheet,
+          onEditSelection: _showOptionsSheet,
+          onFitView: _cubit.fitGraphToView,
+          onDeleteSelected: _cubit.removeSelected,
         ),
       ],
     );
   }
 }
+
+enum _CompactMenuAction { save, rename, fit, delete }

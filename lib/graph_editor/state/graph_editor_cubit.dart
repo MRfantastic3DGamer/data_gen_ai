@@ -8,7 +8,7 @@ import 'package:data_gen_ai/graph_editor/state/graph_editor_state.dart';
 import 'package:data_gen_ai/graph_editor/vyuh/vyuh_connection_validator.dart';
 import 'package:data_gen_ai/graph_editor/vyuh/vyuh_graph_adapter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:vyuh_node_flow/vyuh_node_flow.dart';
+import 'package:vyuh_node_flow/vyuh_node_flow.dart' as vyuh;
 
 class GraphEditorCubit extends Cubit<GraphEditorState> {
   GraphEditorCubit(this._fileService, {GraphDocument? document, String? fileKey})
@@ -23,12 +23,12 @@ class GraphEditorCubit extends Cubit<GraphEditorState> {
       );
 
   final GraphFileService _fileService;
-  late final NodeFlowController<GraphNodeData, dynamic> _controller;
+  late final vyuh.NodeFlowController<GraphNodeData, dynamic> _controller;
 
-  NodeFlowController<GraphNodeData, dynamic> get controller => _controller;
+  vyuh.NodeFlowController<GraphNodeData, dynamic> get controller => _controller;
 
-  NodeFlowEvents<GraphNodeData, dynamic> buildEvents() {
-    return NodeFlowEvents<GraphNodeData, dynamic>(
+  vyuh.NodeFlowEvents<GraphNodeData, dynamic> buildEvents() {
+    return vyuh.NodeFlowEvents<GraphNodeData, dynamic>(
       onSelectionChange: (selection) {
         final selected =
             selection.nodes.isEmpty ? null : selection.nodes.first.id;
@@ -39,7 +39,7 @@ class GraphEditorCubit extends Cubit<GraphEditorState> {
           ),
         );
       },
-      connection: ConnectionEvents<GraphNodeData, dynamic>(
+      connection: vyuh.ConnectionEvents<GraphNodeData, dynamic>(
         onBeforeComplete: (context) {
           return VyuhConnectionValidator.validate(context, state.document);
         },
@@ -58,7 +58,7 @@ class GraphEditorCubit extends Cubit<GraphEditorState> {
           emit(state.copyWith(document: document, isDirty: true));
         },
       ),
-      node: NodeEvents<GraphNodeData>(
+      node: vyuh.NodeEvents<GraphNodeData>(
         onDragStop: (node) {
           _syncDocumentFromController(markDirty: true);
         },
@@ -79,7 +79,7 @@ class GraphEditorCubit extends Cubit<GraphEditorState> {
   void load(GraphDocument document, String fileKey) {
     final migrated = VyuhGraphAdapter.migrateLegacyContexts(document);
     _controller.loadGraph(
-      NodeGraph<GraphNodeData, dynamic>(
+      vyuh.NodeGraph<GraphNodeData, dynamic>(
         nodes: migrated.nodes.map(VyuhGraphAdapter.vyuhNodeFromGraphNode).toList(),
         connections: migrated.edges.map(VyuhGraphAdapter.connectionFromEdge).toList(),
       ),
@@ -109,6 +109,24 @@ class GraphEditorCubit extends Cubit<GraphEditorState> {
   }
 
   void addNode(String typeId, Offset position) {
+    _addNode(typeId, position);
+  }
+
+  String addNodeAtViewportCenter(String typeId, {bool isBlock = false}) {
+    final center = _controller.getViewportCenter();
+    final count = state.document.nodes.length;
+    final position = Offset(
+      center.dx + (count % 4) * 28,
+      center.dy + (count % 4) * 28 + (isBlock ? 48 : 0),
+    );
+    return _addNode(typeId, position);
+  }
+
+  void fitGraphToView() {
+    _controller.fitToView();
+  }
+
+  String _addNode(String typeId, Offset position) {
     final node = VyuhGraphAdapter.createVyuhNode(typeId, position);
     _controller.addNode(node);
     final document = GraphEditorLogic.addNode(
@@ -126,6 +144,9 @@ class GraphEditorCubit extends Cubit<GraphEditorState> {
         selectedNodeId: node.id,
       ),
     );
+    _controller.selectNode(node.id);
+    _controller.animateToNode(node.id);
+    return node.id;
   }
 
   void removeSelected() {
@@ -150,7 +171,7 @@ class GraphEditorCubit extends Cubit<GraphEditorState> {
       ..clear()
       ..addAll(options);
     VyuhGraphAdapter.refreshNodePorts(node);
-    _controller.setNodePorts(nodeId, List<Port>.from(node.ports));
+    _controller.setNodePorts(nodeId, List<vyuh.Port>.from(node.ports));
     _controller.setNodeSize(nodeId, node.size.value);
 
     final nodes = state.document.nodes.map((graphNode) {

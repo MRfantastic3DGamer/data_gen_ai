@@ -10,7 +10,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class NodeOptionsPanel extends StatelessWidget {
-  const NodeOptionsPanel({super.key});
+  const NodeOptionsPanel({super.key, this.scrollController});
+
+  final ScrollController? scrollController;
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +29,7 @@ class NodeOptionsPanel extends StatelessWidget {
         return _OptionsScaffold(
           title: definition?.displayName ?? 'Node',
           subtitle: definition?.description,
+          scrollController: scrollController,
           child: _NodeOptionsEditor(node: selectedNode),
         );
       },
@@ -39,11 +42,13 @@ class _OptionsScaffold extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.child,
+    this.scrollController,
   });
 
   final String title;
   final String? subtitle;
   final Widget child;
+  final ScrollController? scrollController;
 
   @override
   Widget build(BuildContext context) {
@@ -75,6 +80,7 @@ class _OptionsScaffold extends StatelessWidget {
         ),
         Expanded(
           child: SingleChildScrollView(
+            controller: scrollController,
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: child,
           ),
